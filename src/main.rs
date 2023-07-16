@@ -30,32 +30,36 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
     f.render_widget(block, chunks[1]);
 }
 
-fn main() -> io::Result<()> {
-    // setup terminal
+fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {
     enable_raw_mode()?;
+
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+
     let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    Terminal::new(backend)
+}
 
-    // terminal.draw(|f| {
-    //     let size = f.size();
-    //     let block = Block::default().title("Block").borders(Borders::ALL);
-    //     f.render_widget(block, size);
-    // })?;
-
-    terminal.draw(ui)?;
-
-    thread::sleep(Duration::from_millis(5000));
-
-    // restore terminal
+fn restore_terminal(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
     disable_raw_mode()?;
+
     execute!(
         terminal.backend_mut(),
         LeaveAlternateScreen,
         DisableMouseCapture
     )?;
+
     terminal.show_cursor()?;
 
     Ok(())
+}
+
+fn main() -> io::Result<()> {
+    let mut terminal = setup_terminal()?;
+
+    terminal.draw(ui)?;
+
+    thread::sleep(Duration::from_millis(5000));
+
+    restore_terminal(terminal)
 }
