@@ -1,9 +1,12 @@
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{io, thread, time::Duration};
+use std::{
+    io,
+    time::{Duration, Instant},
+};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -54,12 +57,34 @@ fn restore_terminal(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> io:
     Ok(())
 }
 
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, tick_rate: Duration) -> io::Result<()> {
+    let mut last_tick = Instant::now();
+
+    loop {
+        terminal.draw(ui)?;
+
+        let timeout = tick_rate
+            .checked_sub(last_tick.elapsed())
+            .unwrap_or_else(|| Duration::from_secs(0));
+        if crossterm::event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                if let KeyCode::Char('q') = key.code {
+                    return Ok(());
+                }
+            }
+        }
+        if last_tick.elapsed() >= tick_rate {
+            last_tick = Instant::now();
+        }
+    }
+}
+
 fn main() -> io::Result<()> {
     let mut terminal = setup_terminal()?;
 
-    terminal.draw(ui)?;
+    let tick_rate = Duration::from_millis(250);
 
-    thread::sleep(Duration::from_millis(5000));
+    run_app(&mut terminal, tick_rate)?;
 
     restore_terminal(terminal)
 }
