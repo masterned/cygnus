@@ -49,6 +49,10 @@ impl Character {
         self.race.get_size()
     }
 
+    pub fn get_walking_speed(&self) -> usize {
+        self.race.get_walking_speed()
+    }
+
     pub fn get_ability_score(&self, ability: Ability) -> usize {
         self.abilities.get_score(ability)
     }
@@ -253,5 +257,12 @@ mod tests {
         let character = Character::dummy();
 
         assert_eq!(character.get_size(), Size::Medium);
+    }
+
+    #[test]
+    fn _should_get_initial_walking_speed_from_race() {
+        let character = Character::dummy();
+
+        assert_eq!(character.get_walking_speed(), 30);
     }
 }
