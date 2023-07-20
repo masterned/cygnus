@@ -2,6 +2,7 @@ use crate::{
     ability::{Abilities, Ability},
     class::Class,
     modifiers::Proficiency,
+    race::{Race, Size},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,16 +27,6 @@ pub enum Gender {
     Female,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Size {
-    Tiny,
-    Small,
-    Medium,
-    Large,
-    Huge,
-    Gargantuan,
-}
-
 pub struct Personality {
     pub personality_traits: Vec<String>,
     pub ideals: Vec<String>,
@@ -47,13 +38,17 @@ pub struct Character {
     pub name: String,
     pub alignment: Alignment,
     pub gender: Option<Gender>,
-    pub size: Size,
     pub personality: Personality,
+    race: Box<dyn Race>,
     abilities: Abilities,
     classes: Vec<Box<dyn Class>>,
 }
 
 impl Character {
+    pub fn get_size(&self) -> Size {
+        self.race.get_size()
+    }
+
     pub fn get_ability_score(&self, ability: Ability) -> usize {
         self.abilities.get_score(ability)
     }
@@ -90,7 +85,10 @@ impl Character {
 
 #[cfg(test)]
 mod tests {
-    use crate::class::{Artificer, Wizard};
+    use crate::{
+        class::{Artificer, Wizard},
+        race::Human,
+    };
 
     use super::*;
 
@@ -100,8 +98,8 @@ mod tests {
                 name: "Dummy".into(),
                 alignment: (Conformity::Neutral, Morality::Neutral),
                 gender: None,
-                size: Size::Medium,
                 abilities: Abilities::default(),
+                race: Box::new(Human),
                 classes: vec![],
                 personality: Personality {
                     personality_traits: vec![],
@@ -248,5 +246,12 @@ mod tests {
         character.classes = vec![Box::new(Artificer { level: 1 })];
 
         assert_eq!(character.get_saving_throw_mod(Ability::Constitution), 1);
+    }
+
+    #[test]
+    fn _should_get_initial_size_from_race() {
+        let character = Character::dummy();
+
+        assert_eq!(character.get_size(), Size::Medium);
     }
 }
