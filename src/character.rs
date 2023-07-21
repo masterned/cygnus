@@ -103,7 +103,7 @@ mod tests {
                 alignment: (Conformity::Neutral, Morality::Neutral),
                 gender: None,
                 abilities: Abilities::default(),
-                race: Box::new(Human::default()),
+                race: Box::<Human>::default(),
                 classes: vec![],
                 personality: Personality {
                     personality_traits: vec![],
