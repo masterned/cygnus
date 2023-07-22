@@ -131,7 +131,7 @@ pub trait Race {
 
     fn get_walking_speed(&self) -> usize;
 
-    fn get_ability_score_increase(&self, ability: &Ability) -> usize;
+    fn get_ability_score_bonus(&self, ability: &Ability) -> usize;
 }
 
 pub struct Human {
@@ -155,7 +155,7 @@ impl Race for Human {
         30
     }
 
-    fn get_ability_score_increase(&self, ability: &Ability) -> usize {
+    fn get_ability_score_bonus(&self, ability: &Ability) -> usize {
         self.ability_score_increase.get_delta_of(ability)
     }
 

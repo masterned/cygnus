@@ -57,11 +57,11 @@ impl Character {
         self.race.get_walking_speed()
     }
 
-    pub fn get_ability_score(&self, ability: Ability) -> usize {
-        self.abilities.get_score(ability)
+    pub fn get_ability_score(&self, ability: &Ability) -> usize {
+        self.abilities.get_base_score(ability)
     }
 
-    pub fn get_ability_modifier(&self, ability: Ability) -> isize {
+    pub fn get_ability_modifier(&self, ability: &Ability) -> isize {
         Ability::calculate_modifier(self.get_ability_score(ability))
     }
 
@@ -75,13 +75,13 @@ impl Character {
         (self.get_level() - 1) / 4 + 2
     }
 
-    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<Proficiency> {
+    pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<Proficiency> {
         self.classes
             .first()
             .and_then(|primary_class| primary_class.get_saving_throw_proficiency(ability))
     }
 
-    pub fn get_saving_throw_mod(&self, ability: Ability) -> isize {
+    pub fn get_saving_throw_mod(&self, ability: &Ability) -> isize {
         self.get_proficiency_bonus() as isize
             * self
                 .get_saving_throw_proficiency(ability)
@@ -192,27 +192,27 @@ mod tests {
         let character = Character::dummy();
 
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Strength),
+            character.get_saving_throw_proficiency(&Ability::Strength),
             None
         );
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Dexterity),
+            character.get_saving_throw_proficiency(&Ability::Dexterity),
             None
         );
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Constitution),
+            character.get_saving_throw_proficiency(&Ability::Constitution),
             None
         );
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Intelligence),
+            character.get_saving_throw_proficiency(&Ability::Intelligence),
             None
         );
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Wisdom),
+            character.get_saving_throw_proficiency(&Ability::Wisdom),
             None
         );
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Charisma),
+            character.get_saving_throw_proficiency(&Ability::Charisma),
             None
         );
     }
@@ -223,11 +223,11 @@ mod tests {
         character.classes = vec![Box::new(Artificer { level: 1 })];
 
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Constitution),
+            character.get_saving_throw_proficiency(&Ability::Constitution),
             Some(Proficiency::Proficiency)
         );
         assert_eq!(
-            character.get_saving_throw_proficiency(Ability::Intelligence),
+            character.get_saving_throw_proficiency(&Ability::Intelligence),
             Some(Proficiency::Proficiency)
         );
     }
@@ -241,11 +241,11 @@ mod tests {
         ];
 
         assert_eq!(
-            multiclass_character.get_saving_throw_proficiency(Ability::Wisdom),
+            multiclass_character.get_saving_throw_proficiency(&Ability::Wisdom),
             Some(Proficiency::Proficiency)
         );
         assert_eq!(
-            multiclass_character.get_saving_throw_proficiency(Ability::Constitution),
+            multiclass_character.get_saving_throw_proficiency(&Ability::Constitution),
             None
         );
     }
@@ -255,7 +255,7 @@ mod tests {
         let mut character = Character::dummy();
         character.classes = vec![Box::new(Artificer { level: 1 })];
 
-        assert_eq!(character.get_saving_throw_mod(Ability::Strength), -1);
+        assert_eq!(character.get_saving_throw_mod(&Ability::Strength), -1);
     }
 
     #[test]
@@ -263,7 +263,7 @@ mod tests {
         let mut character = Character::dummy();
         character.classes = vec![Box::new(Artificer { level: 1 })];
 
-        assert_eq!(character.get_saving_throw_mod(Ability::Constitution), 1);
+        assert_eq!(character.get_saving_throw_mod(&Ability::Constitution), 1);
     }
 
     #[test]

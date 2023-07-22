@@ -3,7 +3,7 @@ use crate::{ability::Ability, modifiers::Proficiency};
 pub trait Class {
     fn get_level(&self) -> usize;
 
-    fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<Proficiency>;
+    fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<Proficiency>;
 }
 
 pub struct Artificer {
@@ -15,7 +15,7 @@ impl Class for Artificer {
         self.level
     }
 
-    fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<Proficiency> {
+    fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<Proficiency> {
         match ability {
             Ability::Constitution | Ability::Intelligence => Some(Proficiency::Proficiency),
             _ => None,
@@ -32,7 +32,7 @@ impl Class for Wizard {
         self.level
     }
 
-    fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<Proficiency> {
+    fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<Proficiency> {
         match ability {
             Ability::Intelligence | Ability::Wisdom => Some(Proficiency::Proficiency),
             _ => None,
