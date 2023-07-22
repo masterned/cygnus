@@ -2,7 +2,7 @@ use crate::{
     ability::{Abilities, Ability},
     class::Class,
     modifiers::Proficiency,
-    race::{Race, Size},
+    race::{CreatureType, Race, Size},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -45,6 +45,10 @@ pub struct Character {
 }
 
 impl Character {
+    pub fn get_creature_type(&self) -> CreatureType {
+        self.race.get_creature_type()
+    }
+
     pub fn get_size(&self) -> Size {
         self.race.get_size()
     }
@@ -113,6 +117,16 @@ mod tests {
                 },
             }
         }
+    }
+
+    #[test]
+    fn _should_default_character_creature_type_to_race_creature_type() {
+        let mut character = Character::dummy();
+        let race = Human::default();
+        let race_creature_type = race.get_creature_type();
+        character.race = Box::new(race);
+
+        assert_eq!(character.get_creature_type(), race_creature_type);
     }
 
     #[test]
