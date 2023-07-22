@@ -3,6 +3,24 @@ use std::{error::Error, fmt};
 use crate::ability::Ability;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CreatureType {
+    Aberration,
+    Beast,
+    Celestial,
+    Construct,
+    Dragon,
+    Elemental,
+    Fey,
+    Fiend,
+    Giant,
+    Humanoid,
+    Monstrosity,
+    Ooze,
+    Plant,
+    Undead,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Size {
     Tiny,
     Small,
@@ -107,6 +125,8 @@ impl AbilityScoreIncrease {
 }
 
 pub trait Race {
+    fn get_creature_type(&self) -> CreatureType;
+
     fn get_size(&self) -> Size;
 
     fn get_walking_speed(&self) -> usize;
@@ -137,6 +157,10 @@ impl Race for Human {
 
     fn get_ability_score_increase(&self, ability: &Ability) -> usize {
         self.ability_score_increase.get_delta_of(ability)
+    }
+
+    fn get_creature_type(&self) -> CreatureType {
+        CreatureType::Humanoid
     }
 }
 
