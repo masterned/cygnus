@@ -62,7 +62,7 @@ impl Character {
     }
 
     pub fn get_ability_modifier(&self, ability: Ability) -> isize {
-        self.abilities.get_modifier(ability)
+        Ability::calculate_modifier(self.get_ability_score(ability))
     }
 
     pub fn get_level(&self) -> usize {
@@ -87,7 +87,7 @@ impl Character {
                 .get_saving_throw_proficiency(ability)
                 .map(|p| p as isize)
                 .unwrap_or(0)
-            + self.abilities.get_modifier(ability)
+            + self.get_ability_modifier(ability)
     }
 }
 
