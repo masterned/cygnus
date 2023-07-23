@@ -1,7 +1,8 @@
 use crate::{
     ability::{Abilities, Ability},
     class::Classes,
-    modifiers::Proficiency,
+    item::{Item, Items},
+    modifiers::{Encumbrance, Proficiency},
     race::{CreatureType, Race, Size},
 };
 
@@ -42,6 +43,7 @@ pub struct Character {
     race: Box<dyn Race>,
     abilities: Abilities,
     classes: Classes,
+    items: Items,
 }
 
 impl Character {
@@ -80,6 +82,23 @@ impl Character {
     pub fn get_saving_throw_mod(&self, ability: &Ability) -> isize {
         self.classes.get_saving_throw_bonus(ability) as isize + self.get_ability_modifier(ability)
     }
+
+    pub fn get_variant_encumbrance(&self) -> Option<Encumbrance> {
+        let total_weight_carried = self.items.get_total_weight();
+        let strength_score = self.get_ability_score(&Ability::Strength);
+
+        if total_weight_carried > (10 * strength_score) {
+            Some(Encumbrance::HeavilyEncumbered)
+        } else if total_weight_carried > (5 * strength_score) {
+            Some(Encumbrance::Encumbered)
+        } else {
+            None
+        }
+    }
+
+    pub fn add_item(&mut self, item: Item) {
+        self.items.add_item(item);
+    }
 }
 
 #[cfg(test)]
@@ -103,6 +122,7 @@ mod tests {
                     bonds: vec![],
                     flaws: vec![],
                 },
+                items: Items::default(),
             }
         }
     }
@@ -146,5 +166,34 @@ mod tests {
         let character = Character::dummy();
 
         assert_eq!(character.get_walking_speed(), 30);
+    }
+
+    #[test]
+    fn _characters_with_strength_and_no_items_should_not_be_encumbered() {
+        let character = Character::dummy();
+
+        assert_eq!(character.get_variant_encumbrance(), None);
+    }
+
+    #[test]
+    fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered() {
+        let mut character = Character::dummy();
+        character.add_item(Item::new(42));
+
+        assert_eq!(
+            character.get_variant_encumbrance(),
+            Some(Encumbrance::Encumbered)
+        );
+    }
+
+    #[test]
+    fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered() {
+        let mut character = Character::dummy();
+        character.add_item(Item::new(81));
+
+        assert_eq!(
+            character.get_variant_encumbrance(),
+            Some(Encumbrance::HeavilyEncumbered)
+        );
     }
 }

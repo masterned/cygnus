@@ -20,3 +20,9 @@ impl Resistance {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Encumbrance {
+    Encumbered,
+    HeavilyEncumbered,
+}
