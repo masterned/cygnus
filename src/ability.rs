@@ -31,7 +31,7 @@ pub struct Abilities(HashMap<Ability, usize>);
 
 impl Abilities {
     pub fn get_base_score(&self, ability: &Ability) -> usize {
-        *self.0.get(&ability).unwrap_or(&0)
+        *self.0.get(ability).unwrap_or(&0)
     }
 }
 
