@@ -1,6 +1,6 @@
 use std::{error::Error, fmt};
 
-use crate::ability::Ability;
+use crate::{ability::Ability, modifiers::Resistance};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CreatureType {
@@ -18,6 +18,21 @@ pub enum CreatureType {
     Ooze,
     Plant,
     Undead,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DamageType {
+    Necrotic,
+    Radiant,
+    Poison,
+    Force,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Condition {
+    MagicalSleep,
+    Constrained,
+    Unconscience,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -132,6 +147,10 @@ pub trait Race {
     fn get_walking_speed(&self) -> usize;
 
     fn get_ability_score_bonus(&self, ability: &Ability) -> usize;
+
+    fn get_damage_resistance(&self, damage_type: &DamageType) -> Option<Resistance>;
+
+    fn get_condition_resistance(&self, contition: &Condition) -> Option<Resistance>;
 }
 
 pub struct Human {
@@ -161,6 +180,68 @@ impl Race for Human {
 
     fn get_creature_type(&self) -> CreatureType {
         CreatureType::Humanoid
+    }
+
+    fn get_damage_resistance(&self, _damage_type: &DamageType) -> Option<Resistance> {
+        None
+    }
+
+    fn get_condition_resistance(&self, _condition: &Condition) -> Option<Resistance> {
+        None
+    }
+}
+
+pub struct ShadarKai {
+    ability_score_increase: AbilityScoreIncrease,
+}
+
+impl ShadarKai {
+    pub fn new_two_one(two: Ability, one: Ability) -> Result<Self, Box<dyn Error>> {
+        let ability_score_increase = AbilityScoreIncrease::new_two_one(two, one)?;
+
+        Ok(ShadarKai {
+            ability_score_increase,
+        })
+    }
+
+    pub fn new_one_one_one(a: Ability, b: Ability, c: Ability) -> Result<Self, Box<dyn Error>> {
+        let ability_score_increase = AbilityScoreIncrease::new_one_one_one(a, b, c)?;
+
+        Ok(ShadarKai {
+            ability_score_increase,
+        })
+    }
+}
+
+impl Race for ShadarKai {
+    fn get_creature_type(&self) -> CreatureType {
+        CreatureType::Humanoid
+    }
+
+    fn get_size(&self) -> Size {
+        Size::Medium
+    }
+
+    fn get_walking_speed(&self) -> usize {
+        30
+    }
+
+    fn get_ability_score_bonus(&self, ability: &Ability) -> usize {
+        self.ability_score_increase.get_delta_of(ability)
+    }
+
+    fn get_damage_resistance(&self, damage_type: &DamageType) -> Option<Resistance> {
+        match damage_type {
+            DamageType::Necrotic => Some(Resistance::Resistant),
+            _ => None,
+        }
+    }
+
+    fn get_condition_resistance(&self, condition: &Condition) -> Option<Resistance> {
+        match condition {
+            Condition::MagicalSleep => Some(Resistance::Immune),
+            _ => None,
+        }
     }
 }
 
