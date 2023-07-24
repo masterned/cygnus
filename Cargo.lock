@@ -220,6 +220,7 @@ name = "cygnus"
 version = "0.1.0"
 dependencies = [
  "crossterm",
+ "dotenvy",
  "sqlx",
  "tokio",
  "tui",

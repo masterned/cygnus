@@ -4,7 +4,7 @@ use sqlx::sqlite::SqlitePool;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let pool = SqlitePool::connect("sqlite:reference.db").await?;
+    let pool = SqlitePool::connect(&dotenvy::var("DATABASE_URL")?).await?;
 
     list_items(&pool).await?;
     Ok(())

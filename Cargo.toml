@@ -11,6 +11,7 @@ tui = "0.19"
 crossterm = "0.25"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite" ] }
 tokio = { version = "1", features = ["full"] }
+dotenvy = "0.15.7"
 
 [[bin]]
 name = "tui_test"
