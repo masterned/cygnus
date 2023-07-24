@@ -56,7 +56,14 @@ impl Character {
     }
 
     pub fn get_walking_speed(&self) -> usize {
-        self.race.get_walking_speed()
+        self.race
+            .get_walking_speed()
+            .checked_sub(match self.get_variant_encumbrance() {
+                Some(Encumbrance::Encumbered) => 10,
+                Some(Encumbrance::HeavilyEncumbered) => 20,
+                _ => 0,
+            })
+            .unwrap_or(0)
     }
 
     pub fn get_ability_score(&self, ability: &Ability) -> usize {
@@ -195,5 +202,21 @@ mod tests {
             character.get_variant_encumbrance(),
             Some(Encumbrance::HeavilyEncumbered)
         );
+    }
+
+    #[test]
+    fn _encumbered_characters_should_reduce_their_speed_by_10() {
+        let mut character = Character::dummy();
+        character.add_item(Item::new(42));
+
+        assert_eq!(character.get_walking_speed(), 20);
+    }
+
+    #[test]
+    fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() {
+        let mut character = Character::dummy();
+        character.add_item(Item::new(81));
+
+        assert_eq!(character.get_walking_speed(), 10);
     }
 }
