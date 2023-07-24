@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n    SELECT item_id, name, weight\n    FROM item\n    ORDER BY item_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "item_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "weight",
+        "ordinal": 2,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "929f38278ab770ffb61b5d4957b46f538dd330aff5c71bfb248e97f161709771"
+}

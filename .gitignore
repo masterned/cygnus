@@ -1,1 +1,12 @@
+# Built artifacts
 /target
+
+# SQLite DB
+reference.db
+
+# Environment
+.env
+
+# Shared-memory and WAL files created by SQLite.
+*-shm
+*-wal
