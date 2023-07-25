@@ -44,6 +44,7 @@ pub struct Character {
     abilities: Abilities,
     classes: Classes,
     items: Items,
+    exhaustion_level: usize,
 }
 
 impl Character {
@@ -56,14 +57,21 @@ impl Character {
     }
 
     pub fn get_walking_speed(&self) -> usize {
-        self.race
-            .get_walking_speed()
-            .checked_sub(match self.get_variant_encumbrance() {
-                Some(Encumbrance::Encumbered) => 10,
-                Some(Encumbrance::HeavilyEncumbered) => 20,
-                _ => 0,
-            })
-            .unwrap_or(0)
+        let base_speed = self.race.get_walking_speed();
+        let encumbrance_modifier = match self.get_variant_encumbrance() {
+            Some(Encumbrance::Encumbered) => 10,
+            Some(Encumbrance::HeavilyEncumbered) => 20,
+            _ => 0,
+        };
+        let mut walking_speed = base_speed.checked_sub(encumbrance_modifier).unwrap_or(0);
+        let exhaustion_level = self.get_exhaustion_level();
+        if exhaustion_level >= 2 {
+            walking_speed /= 2;
+        }
+        if exhaustion_level >= 5 {
+            walking_speed = 0;
+        }
+        walking_speed
     }
 
     pub fn get_ability_score(&self, ability: &Ability) -> usize {
@@ -106,6 +114,14 @@ impl Character {
     pub fn add_item(&mut self, item: Item) {
         self.items.add_item(item);
     }
+
+    pub fn get_exhaustion_level(&self) -> usize {
+        self.exhaustion_level
+    }
+
+    pub fn set_exhaustion_level(&mut self, new_level: usize) {
+        self.exhaustion_level = new_level;
+    }
 }
 
 #[cfg(test)]
@@ -130,6 +146,7 @@ mod tests {
                     flaws: vec![],
                 },
                 items: Items::default(),
+                exhaustion_level: 0,
             }
         }
     }
@@ -218,5 +235,27 @@ mod tests {
         character.add_item(Item::new(81));
 
         assert_eq!(character.get_walking_speed(), 10);
+    }
+
+    #[test]
+    fn _characters_with_2_or_more_exhaustion_should_half_their_movement_speed() {
+        let mut character = Character::dummy();
+
+        character.set_exhaustion_level(2);
+        assert_eq!(character.get_walking_speed(), 15);
+
+        character.set_exhaustion_level(3);
+        assert_eq!(character.get_walking_speed(), 15);
+
+        character.set_exhaustion_level(4);
+        assert_eq!(character.get_walking_speed(), 15);
+    }
+
+    #[test]
+    fn _characters_with_5_levels_of_exhaustion_should_have_0_movement_speed() {
+        let mut character = Character::dummy();
+
+        character.set_exhaustion_level(5);
+        assert_eq!(character.get_walking_speed(), 0);
     }
 }
