@@ -4,6 +4,7 @@ use crate::{
     item::{Item, Items},
     modifiers::{Encumbrance, Proficiency},
     race::{CreatureType, Race, Size},
+    skill::{Skill, Skills},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -43,6 +44,7 @@ pub struct Character {
     race: Box<dyn Race>,
     abilities: Abilities,
     classes: Classes,
+    skills: Skills,
     items: Items,
     exhaustion_level: usize,
 }
@@ -122,11 +124,35 @@ impl Character {
     pub fn set_exhaustion_level(&mut self, new_level: usize) {
         self.exhaustion_level = new_level;
     }
+
+    pub fn get_skill_modifier(&self, skill: &Skill) -> isize {
+        self.get_ability_modifier(&skill.get_ability())
+            + (match self.skills.get_proficiency(skill) {
+                Some(Proficiency::Proficiency) => self.get_proficiency_bonus(),
+                Some(Proficiency::Expertise) => self.get_proficiency_bonus() * 2,
+                None => 0,
+            }) as isize
+    }
+
+    pub fn get_passive_perception(&self) -> usize {
+        (10 + self.get_skill_modifier(&Skill::Perception)) as usize
+    }
+
+    pub fn get_passive_investigation(&self) -> usize {
+        (10 + self.get_skill_modifier(&Skill::Investigation)) as usize
+    }
+
+    pub fn get_passive_insight(&self) -> usize {
+        (10 + self.get_skill_modifier(&Skill::Insight)) as usize
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{class::Artificer, race::Human};
+    use crate::{
+        class::{Artificer, Wizard},
+        race::Human,
+    };
 
     use super::*;
 
@@ -145,6 +171,7 @@ mod tests {
                     bonds: vec![],
                     flaws: vec![],
                 },
+                skills: Skills::default(),
                 items: Items::default(),
                 exhaustion_level: 0,
             }
@@ -257,5 +284,72 @@ mod tests {
 
         character.set_exhaustion_level(5);
         assert_eq!(character.get_walking_speed(), 0);
+    }
+
+    #[test]
+    fn _skill_modifier_should_default_to_related_ability_modifier() {
+        let character = Character::dummy();
+
+        assert_eq!(character.get_skill_modifier(&Skill::Arcana), -1);
+    }
+
+    #[test]
+    fn _proficiency_should_affect_skill_modifier() {
+        let mut character = Character::dummy();
+        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character
+            .skills
+            .set_proficiency(Skill::Arcana, Some(Proficiency::Proficiency));
+
+        assert_eq!(character.get_skill_modifier(&Skill::Arcana), 1);
+    }
+
+    #[test]
+    fn _expertise_should_affect_skill_modifier() {
+        let mut character = Character::dummy();
+        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character
+            .skills
+            .set_proficiency(Skill::Arcana, Some(Proficiency::Expertise));
+
+        assert_eq!(character.get_skill_modifier(&Skill::Arcana), 3);
+    }
+
+    #[test]
+    fn _passive_perception_should_be_10_plus_perception_modifier() {
+        let mut character = Character::dummy();
+        character.classes.add_class(Box::new(Wizard { level: 1 }));
+
+        assert_eq!(character.get_passive_perception(), 9);
+
+        character
+            .skills
+            .set_proficiency(Skill::Perception, Some(Proficiency::Proficiency));
+        assert_eq!(character.get_passive_perception(), 11);
+    }
+    #[test]
+    fn _passive_investigation_should_be_10_plus_investigation_modifier() {
+        let mut character = Character::dummy();
+        character.classes.add_class(Box::new(Wizard { level: 1 }));
+
+        assert_eq!(character.get_passive_investigation(), 9);
+
+        character
+            .skills
+            .set_proficiency(Skill::Investigation, Some(Proficiency::Proficiency));
+        assert_eq!(character.get_passive_investigation(), 11);
+    }
+
+    #[test]
+    fn _passive_insight_should_be_10_plus_insight_modifier() {
+        let mut character = Character::dummy();
+        character.classes.add_class(Box::new(Wizard { level: 1 }));
+
+        assert_eq!(character.get_passive_insight(), 9);
+
+        character
+            .skills
+            .set_proficiency(Skill::Insight, Some(Proficiency::Proficiency));
+        assert_eq!(character.get_passive_insight(), 11);
     }
 }

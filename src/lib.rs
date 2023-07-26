@@ -6,4 +6,5 @@ pub mod feature;
 pub mod item;
 pub mod modifiers;
 pub mod race;
+pub mod skill;
 pub mod spell;
