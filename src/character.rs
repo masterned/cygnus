@@ -65,7 +65,7 @@ impl Character {
             Some(Encumbrance::HeavilyEncumbered) => 20,
             _ => 0,
         };
-        let mut walking_speed = base_speed.checked_sub(encumbrance_modifier).unwrap_or(0);
+        let mut walking_speed = base_speed.saturating_sub(encumbrance_modifier);
         let exhaustion_level = self.get_exhaustion_level();
         if exhaustion_level >= 2 {
             walking_speed /= 2;

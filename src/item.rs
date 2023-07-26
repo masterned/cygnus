@@ -12,6 +12,7 @@ impl Item {
     }
 }
 
+#[derive(Default)]
 pub struct Items(Vec<Item>);
 
 impl Items {
@@ -21,12 +22,6 @@ impl Items {
 
     pub fn add_item(&mut self, item: Item) {
         self.0.push(item)
-    }
-}
-
-impl Default for Items {
-    fn default() -> Self {
-        Items(vec![])
     }
 }
 
