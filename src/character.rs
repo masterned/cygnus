@@ -1,6 +1,6 @@
 use crate::{
     ability::{Abilities, Ability},
-    class::Classes,
+    class::Class,
     item::{Item, Items},
     modifiers::{Encumbrance, Proficiency},
     race::{CreatureType, Race, Size},
@@ -43,7 +43,7 @@ pub struct Character {
     pub personality: Personality,
     race: Race,
     abilities: Abilities,
-    classes: Classes,
+    classes: Vec<Class>,
     skills: Skills,
     items: Items,
     exhaustion_level: usize,
@@ -85,19 +85,29 @@ impl Character {
     }
 
     pub fn get_level(&self) -> usize {
-        self.classes.get_level()
+        self.classes.iter().map(|class| class.get_level()).sum()
     }
 
     pub fn get_proficiency_bonus(&self) -> usize {
-        self.classes.get_proficiency_bonus()
+        self.get_level()
+            .checked_sub(1)
+            .map(|r| r / 4 + 2)
+            .unwrap_or(0)
     }
 
-    pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<Proficiency> {
-        self.classes.get_saving_throw_proficiency(ability)
+    pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
+        self.classes
+            .first()
+            .and_then(|primary_class| primary_class.get_saving_throw_proficiency(ability))
     }
 
     pub fn get_saving_throw_mod(&self, ability: &Ability) -> isize {
-        self.classes.get_saving_throw_bonus(ability) as isize + self.get_ability_modifier(ability)
+        self.get_proficiency_bonus() as isize
+            * (self
+                .get_saving_throw_proficiency(ability)
+                .map(|&p| p as isize)
+                .unwrap_or(0))
+            + self.get_ability_modifier(ability)
     }
 
     pub fn get_variant_encumbrance(&self) -> Option<Encumbrance> {
@@ -145,11 +155,17 @@ impl Character {
     pub fn get_passive_insight(&self) -> usize {
         (10 + self.get_skill_modifier(&Skill::Insight)) as usize
     }
+
+    pub fn add_class(&mut self, class: Class) {
+        self.classes.push(class);
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::class::{Artificer, Wizard};
+    use std::collections::HashMap;
+
+    use crate::class::ClassTemplate;
 
     use super::*;
 
@@ -161,7 +177,7 @@ mod tests {
                 gender: None,
                 abilities: Abilities::default(),
                 race: Race::human(),
-                classes: Classes::empty(),
+                classes: vec![],
                 personality: Personality {
                     personality_traits: vec![],
                     ideals: vec![],
@@ -183,6 +199,99 @@ mod tests {
     }
 
     #[test]
+    fn _classless_should_have_no_saving_throw_proficiencies() {
+        let character = Character::dummy();
+
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Strength),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Dexterity),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Constitution),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Intelligence),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Wisdom),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Charisma),
+            None
+        );
+    }
+
+    #[test]
+    fn _monoclasses_should_derive_their_saving_throw_proficiencies_from_it() {
+        let mut character = Character::dummy();
+        character.add_class(Class::artificer());
+
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Strength),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Dexterity),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Constitution),
+            Some(&Proficiency::Proficiency)
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Intelligence),
+            Some(&Proficiency::Proficiency)
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Wisdom),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Charisma),
+            None
+        );
+    }
+
+    #[test]
+    fn _multiclasses_should_only_inherit_proficiencies_from_first_class() {
+        let mut character = Character::dummy();
+        character.add_class(Class::wizard());
+        character.add_class(Class::artificer());
+
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Strength),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Dexterity),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Constitution),
+            None
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Intelligence),
+            Some(&Proficiency::Proficiency)
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Wisdom),
+            Some(&Proficiency::Proficiency)
+        );
+        assert_eq!(
+            character.get_saving_throw_proficiency(&Ability::Charisma),
+            None
+        );
+    }
+
+    #[test]
     fn _should_get_saving_throw_mod_without_proficiency() {
         let character = Character::dummy();
 
@@ -192,9 +301,7 @@ mod tests {
     #[test]
     fn _should_get_saving_throw_mod_including_proficiency_bonus() {
         let mut character = Character::dummy();
-        character
-            .classes
-            .add_class(Box::new(Artificer { level: 1 }));
+        character.add_class(Class::artificer());
 
         assert_eq!(character.get_saving_throw_mod(&Ability::Constitution), 1);
     }
@@ -288,9 +395,104 @@ mod tests {
     }
 
     #[test]
+    fn _classless_should_be_level_0() {
+        let character = Character::dummy();
+
+        assert_eq!(character.get_level(), 0);
+    }
+
+    #[test]
+    fn _monoclasses_should_be_the_class_level() {
+        let mut character = Character::dummy();
+        character.add_class(Class::artificer());
+
+        assert_eq!(character.get_level(), 1);
+
+        let mut artificer = Class::artificer();
+        artificer.set_level(20).unwrap();
+        character.classes = vec![artificer];
+
+        assert_eq!(character.get_level(), 20);
+    }
+
+    #[test]
+    fn _multiclasses_should_sum_classes_levels() {
+        let mut character = Character::dummy();
+        character.add_class(Class::artificer());
+        character.add_class(Class::wizard());
+
+        assert_eq!(character.get_level(), 2);
+    }
+
+    #[test]
+    fn _level_0_character_should_not_have_proficiency_bonus() {
+        let character = Character::dummy();
+
+        assert_eq!(character.get_proficiency_bonus(), 0);
+    }
+
+    #[test]
+    fn _level_1_character_should_have_proficiency_bonus_of_2() {
+        let mut character = Character::dummy();
+        character.add_class(Class::artificer());
+
+        assert_eq!(character.get_proficiency_bonus(), 2);
+    }
+
+    #[test]
+    fn _proficiency_bonus_should_go_up_by_1_every_4_level_ups() {
+        let mut character = Character::dummy();
+
+        let lvl4 = Class::try_from(ClassTemplate {
+            name: "lvl4".into(),
+            level: 4,
+            saving_throw_proficiencies: HashMap::new(),
+        })
+        .unwrap();
+        character.classes = vec![lvl4];
+        assert_eq!(character.get_proficiency_bonus(), 2);
+
+        let lvl5 = Class::try_from(ClassTemplate {
+            name: "lvl5".into(),
+            level: 5,
+            saving_throw_proficiencies: HashMap::new(),
+        })
+        .unwrap();
+        character.classes = vec![lvl5];
+        assert_eq!(character.get_proficiency_bonus(), 3);
+
+        let lvl9 = Class::try_from(ClassTemplate {
+            name: "lvl9".into(),
+            level: 9,
+            saving_throw_proficiencies: HashMap::new(),
+        })
+        .unwrap();
+        character.classes = vec![lvl9];
+        assert_eq!(character.get_proficiency_bonus(), 4);
+
+        let lvl13 = Class::try_from(ClassTemplate {
+            name: "lvl13".into(),
+            level: 13,
+            saving_throw_proficiencies: HashMap::new(),
+        })
+        .unwrap();
+        character.classes = vec![lvl13];
+        assert_eq!(character.get_proficiency_bonus(), 5);
+
+        let lvl17 = Class::try_from(ClassTemplate {
+            name: "lvl17".into(),
+            level: 17,
+            saving_throw_proficiencies: HashMap::new(),
+        })
+        .unwrap();
+        character.classes = vec![lvl17];
+        assert_eq!(character.get_proficiency_bonus(), 6);
+    }
+
+    #[test]
     fn _proficiency_should_affect_skill_modifier() {
         let mut character = Character::dummy();
-        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character.add_class(Class::wizard());
         character
             .skills
             .set_proficiency(Skill::Arcana, Some(Proficiency::Proficiency));
@@ -301,7 +503,7 @@ mod tests {
     #[test]
     fn _expertise_should_affect_skill_modifier() {
         let mut character = Character::dummy();
-        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character.add_class(Class::wizard());
         character
             .skills
             .set_proficiency(Skill::Arcana, Some(Proficiency::Expertise));
@@ -312,7 +514,7 @@ mod tests {
     #[test]
     fn _passive_perception_should_be_10_plus_perception_modifier() {
         let mut character = Character::dummy();
-        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character.add_class(Class::wizard());
 
         assert_eq!(character.get_passive_perception(), 9);
 
@@ -324,7 +526,7 @@ mod tests {
     #[test]
     fn _passive_investigation_should_be_10_plus_investigation_modifier() {
         let mut character = Character::dummy();
-        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character.add_class(Class::wizard());
 
         assert_eq!(character.get_passive_investigation(), 9);
 
@@ -337,7 +539,7 @@ mod tests {
     #[test]
     fn _passive_insight_should_be_10_plus_insight_modifier() {
         let mut character = Character::dummy();
-        character.classes.add_class(Box::new(Wizard { level: 1 }));
+        character.add_class(Class::wizard());
 
         assert_eq!(character.get_passive_insight(), 9);
 
