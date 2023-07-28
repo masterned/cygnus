@@ -41,7 +41,7 @@ pub struct Character {
     pub alignment: Alignment,
     pub gender: Option<Gender>,
     pub personality: Personality,
-    race: Box<dyn Race>,
+    race: Race,
     abilities: Abilities,
     classes: Classes,
     skills: Skills,
@@ -50,11 +50,11 @@ pub struct Character {
 }
 
 impl Character {
-    pub fn get_creature_type(&self) -> CreatureType {
+    pub fn get_creature_type(&self) -> &CreatureType {
         self.race.get_creature_type()
     }
 
-    pub fn get_size(&self) -> Size {
+    pub fn get_size(&self) -> &Size {
         self.race.get_size()
     }
 
@@ -77,7 +77,7 @@ impl Character {
     }
 
     pub fn get_ability_score(&self, ability: &Ability) -> usize {
-        self.abilities.get_base_score(ability)
+        self.abilities.get_base_score(ability) + self.race.get_ability_score_bonus(ability)
     }
 
     pub fn get_ability_modifier(&self, ability: &Ability) -> isize {
@@ -149,10 +149,7 @@ impl Character {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        class::{Artificer, Wizard},
-        race::Human,
-    };
+    use crate::class::{Artificer, Wizard};
 
     use super::*;
 
@@ -163,7 +160,7 @@ mod tests {
                 alignment: (Conformity::Neutral, Morality::Neutral),
                 gender: None,
                 abilities: Abilities::default(),
-                race: Box::<Human>::default(),
+                race: Race::human(),
                 classes: Classes::empty(),
                 personality: Personality {
                     personality_traits: vec![],
@@ -180,12 +177,9 @@ mod tests {
 
     #[test]
     fn _should_default_character_creature_type_to_race_creature_type() {
-        let mut character = Character::dummy();
-        let race = Human::default();
-        let race_creature_type = race.get_creature_type();
-        character.race = Box::new(race);
+        let character = Character::dummy();
 
-        assert_eq!(character.get_creature_type(), race_creature_type);
+        assert_eq!(character.get_creature_type(), &CreatureType::Humanoid);
     }
 
     #[test]
@@ -209,7 +203,7 @@ mod tests {
     fn _should_get_initial_size_from_race() {
         let character = Character::dummy();
 
-        assert_eq!(character.get_size(), Size::Medium);
+        assert_eq!(character.get_size(), &Size::Medium);
     }
 
     #[test]
@@ -229,7 +223,7 @@ mod tests {
     #[test]
     fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(42));
+        character.add_item(Item::new(46));
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -240,7 +234,7 @@ mod tests {
     #[test]
     fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(81));
+        character.add_item(Item::new(91));
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -251,7 +245,7 @@ mod tests {
     #[test]
     fn _encumbered_characters_should_reduce_their_speed_by_10() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(42));
+        character.add_item(Item::new(46));
 
         assert_eq!(character.get_walking_speed(), 20);
     }
@@ -259,7 +253,7 @@ mod tests {
     #[test]
     fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(81));
+        character.add_item(Item::new(91));
 
         assert_eq!(character.get_walking_speed(), 10);
     }
