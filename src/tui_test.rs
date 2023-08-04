@@ -3,6 +3,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use cygnus::ability::Abilities;
 use std::{
     io,
     time::{Duration, Instant},
@@ -27,8 +28,13 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             .as_ref(),
         )
         .split(f.size());
-    let block = Block::default().title("Block").borders(Borders::ALL);
-    f.render_widget(block, chunks[0]);
+
+    let block = Block::default().title("Abilities").borders(Borders::ALL);
+    f.render_widget(block.clone(), chunks[0]);
+
+    let abilities = Abilities::default();
+    abilities.render_tui(f, block.inner(chunks[0]));
+
     let block = Block::default().title("Block 2").borders(Borders::ALL);
     f.render_widget(block, chunks[1]);
 }

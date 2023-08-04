@@ -1,6 +1,13 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+use tui::{
+    backend::Backend,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    widgets::{Block, Borders, Paragraph},
+    Frame,
+};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Ability {
     Strength,
     Dexterity,
@@ -25,19 +32,67 @@ impl Ability {
     pub fn calculate_modifier(ability_score: usize) -> isize {
         ability_score as isize / 2 - 5
     }
+
+    pub fn get_abbreviation(&self) -> &'static str {
+        match self {
+            Ability::Strength => "STR",
+            Ability::Dexterity => "DEX",
+            Ability::Constitution => "CON",
+            Ability::Intelligence => "INT",
+            Ability::Wisdom => "WIS",
+            Ability::Charisma => "CHA",
+        }
+    }
+
+    pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect, score: usize) {
+        let ability_block = Paragraph::new(score.to_string())
+            .alignment(Alignment::Center)
+            .block(
+                Block::default()
+                    .title(self.get_abbreviation())
+                    .borders(Borders::ALL)
+                    .title_alignment(Alignment::Center),
+            );
+        f.render_widget(ability_block, area);
+    }
 }
 
-pub struct Abilities(HashMap<Ability, usize>);
+pub struct Abilities(BTreeMap<Ability, usize>);
 
 impl Abilities {
     pub fn get_base_score(&self, ability: &Ability) -> usize {
         *self.0.get(ability).unwrap_or(&0)
     }
+
+    pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+        let area = Layout::default()
+            .direction(Direction::Horizontal)
+            .margin(0)
+            .constraints(
+                [
+                    Constraint::Percentage(2),
+                    Constraint::Percentage(16),
+                    Constraint::Percentage(16),
+                    Constraint::Percentage(16),
+                    Constraint::Percentage(16),
+                    Constraint::Percentage(16),
+                    Constraint::Percentage(16),
+                    Constraint::Percentage(2),
+                ]
+                .as_ref(),
+            )
+            .split(area);
+
+        self.0
+            .iter()
+            .enumerate()
+            .for_each(|(i, (ability, score))| ability.render_tui(f, area[i + 1], *score));
+    }
 }
 
 impl Default for Abilities {
     fn default() -> Self {
-        Abilities(HashMap::from_iter(
+        Abilities(BTreeMap::from_iter(
             Ability::all().iter().map(|&ability| (ability, 8)),
         ))
     }
