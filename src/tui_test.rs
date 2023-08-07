@@ -3,40 +3,65 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use cygnus::ability::Abilities;
+use cygnus::{
+    ability::Abilities,
+    character::{Character, Conformity, Gender, Morality, Personality},
+    item::Items,
+    race::{CreatureType, Language, Race, RaceTemplate, Size},
+    skill::Skills,
+};
 use std::{
+    collections::HashMap,
     io,
     time::{Duration, Instant},
 };
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders},
     Frame, Terminal,
 };
 
 fn ui<B: Backend>(f: &mut Frame<B>) {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints(
-            [
-                Constraint::Percentage(10),
-                Constraint::Percentage(80),
-                Constraint::Percentage(10),
-            ]
-            .as_ref(),
-        )
-        .split(f.size());
+    let mut abilities = Abilities::default();
+    abilities.0.insert(cygnus::ability::Ability::Strength, 10);
+    abilities.0.insert(cygnus::ability::Ability::Dexterity, 16);
+    abilities
+        .0
+        .insert(cygnus::ability::Ability::Constitution, 19);
+    abilities
+        .0
+        .insert(cygnus::ability::Ability::Intelligence, 20);
+    abilities.0.insert(cygnus::ability::Ability::Wisdom, 10);
+    abilities.0.insert(cygnus::ability::Ability::Charisma, 10);
 
-    let block = Block::default().title("Abilities").borders(Borders::ALL);
-    f.render_widget(block.clone(), chunks[0]);
+    let character = Character {
+        name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
+        alignment: (Conformity::Lawful, Morality::Neutral),
+        gender: Some(Gender::Male),
+        personality: Personality {
+            personality_traits: vec![],
+            ideals: vec![],
+            bonds: vec![],
+            flaws: vec![],
+        },
+        race: Race::from(RaceTemplate {
+            name: "".into(),
+            creature_type: CreatureType::Humanoid,
+            size: Size::Medium,
+            walking_speed: 30,
+            abilities: HashMap::new(),
+            damage_resistances: HashMap::new(),
+            condition_resistances: HashMap::new(),
+            languages: vec![Language::Common],
+            features: vec![],
+        }),
+        abilities,
+        classes: vec![],
+        skills: Skills::default(),
+        items: Items::default(),
+        exhaustion_level: 0,
+    };
 
-    let abilities = Abilities::default();
-    abilities.render_tui(f, block.inner(chunks[0]));
-
-    let block = Block::default().title("Block 2").borders(Borders::ALL);
-    f.render_widget(block, chunks[1]);
+    character.render_tui(f, f.size());
 }
 
 fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {

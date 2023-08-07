@@ -57,7 +57,7 @@ impl Ability {
     }
 }
 
-pub struct Abilities(BTreeMap<Ability, usize>);
+pub struct Abilities(pub BTreeMap<Ability, usize>);
 
 impl Abilities {
     pub fn get_base_score(&self, ability: &Ability) -> usize {

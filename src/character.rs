@@ -1,3 +1,10 @@
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Direction, Layout, Rect},
+    widgets::{Block, Borders, Paragraph},
+    Frame,
+};
+
 use crate::{
     ability::{Abilities, Ability},
     class::Class,
@@ -41,12 +48,12 @@ pub struct Character {
     pub alignment: Alignment,
     pub gender: Option<Gender>,
     pub personality: Personality,
-    race: Race,
-    abilities: Abilities,
-    classes: Vec<Class>,
-    skills: Skills,
-    items: Items,
-    exhaustion_level: usize,
+    pub race: Race,
+    pub abilities: Abilities,
+    pub classes: Vec<Class>,
+    pub skills: Skills,
+    pub items: Items,
+    pub exhaustion_level: usize,
 }
 
 impl Character {
@@ -158,6 +165,34 @@ impl Character {
 
     pub fn add_class(&mut self, class: Class) {
         self.classes.push(class);
+    }
+
+    pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .margin(1)
+            .constraints(
+                [
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(70),
+                    Constraint::Percentage(10),
+                ]
+                .as_ref(),
+            )
+            .split(area);
+
+        let name_block = Paragraph::new(self.name.clone())
+            .block(Block::default().title("Name").borders(Borders::ALL));
+        f.render_widget(name_block, chunks[0]);
+
+        let block = Block::default().title("Abilities").borders(Borders::ALL);
+        f.render_widget(block.clone(), chunks[1]);
+
+        self.abilities.render_tui(f, block.inner(chunks[1]));
+
+        let block = Block::default().title("Body").borders(Borders::ALL);
+        f.render_widget(block, chunks[2]);
     }
 }
 
