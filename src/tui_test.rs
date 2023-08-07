@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use cygnus::{
-    ability::Abilities,
+    ability::{Abilities, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
     item::Items,
     race::{CreatureType, Language, Race, RaceTemplate, Size},
@@ -22,16 +22,12 @@ use tui::{
 
 fn ui<B: Backend>(f: &mut Frame<B>) {
     let mut abilities = Abilities::default();
-    abilities.0.insert(cygnus::ability::Ability::Strength, 10);
-    abilities.0.insert(cygnus::ability::Ability::Dexterity, 16);
-    abilities
-        .0
-        .insert(cygnus::ability::Ability::Constitution, 19);
-    abilities
-        .0
-        .insert(cygnus::ability::Ability::Intelligence, 20);
-    abilities.0.insert(cygnus::ability::Ability::Wisdom, 10);
-    abilities.0.insert(cygnus::ability::Ability::Charisma, 10);
+    abilities.set_score(Ability::Strength, 10);
+    abilities.set_score(Ability::Dexterity, 16);
+    abilities.set_score(Ability::Constitution, 19);
+    abilities.set_score(Ability::Intelligence, 20);
+    abilities.set_score(Ability::Wisdom, 10);
+    abilities.set_score(Ability::Charisma, 10);
 
     let character = Character {
         name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),

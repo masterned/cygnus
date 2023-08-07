@@ -64,6 +64,10 @@ impl Abilities {
         *self.0.get(ability).unwrap_or(&0)
     }
 
+    pub fn set_score(&mut self, ability: Ability, score: usize) {
+        self.0.insert(ability, score);
+    }
+
     pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
         let area = Layout::default()
             .direction(Direction::Horizontal)
