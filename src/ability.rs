@@ -57,9 +57,22 @@ impl Ability {
     }
 }
 
+pub struct AbilitiesTemplate {
+    pub strength: usize,
+    pub dexterity: usize,
+    pub constitution: usize,
+    pub intelligence: usize,
+    pub wisdom: usize,
+    pub charisma: usize,
+}
+
 pub struct Abilities(pub BTreeMap<Ability, usize>);
 
 impl Abilities {
+    pub fn empty() -> Self {
+        Abilities(BTreeMap::new())
+    }
+
     pub fn get_base_score(&self, ability: &Ability) -> usize {
         *self.0.get(ability).unwrap_or(&0)
     }
@@ -99,6 +112,21 @@ impl Default for Abilities {
         Abilities(BTreeMap::from_iter(
             Ability::all().iter().map(|&ability| (ability, 8)),
         ))
+    }
+}
+
+impl From<AbilitiesTemplate> for Abilities {
+    fn from(value: AbilitiesTemplate) -> Self {
+        let mut abilities = Abilities::empty();
+
+        abilities.set_score(Ability::Strength, value.strength);
+        abilities.set_score(Ability::Dexterity, value.dexterity);
+        abilities.set_score(Ability::Constitution, value.constitution);
+        abilities.set_score(Ability::Intelligence, value.intelligence);
+        abilities.set_score(Ability::Wisdom, value.wisdom);
+        abilities.set_score(Ability::Charisma, value.charisma);
+
+        abilities
     }
 }
 
