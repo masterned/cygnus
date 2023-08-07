@@ -81,6 +81,10 @@ impl Abilities {
         self.0.insert(ability, score);
     }
 
+    pub fn get_modifier(&self, ability: &Ability) -> isize {
+        Ability::calculate_modifier(self.get_base_score(ability))
+    }
+
     pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
         let area = Layout::default()
             .direction(Direction::Horizontal)

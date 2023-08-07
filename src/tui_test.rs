@@ -4,11 +4,14 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use cygnus::{
-    ability::{Abilities, AbilitiesTemplate},
+    ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
+    class::{Class, ClassTemplate},
     item::Items,
+    modifiers::Proficiency,
     race::{CreatureType, Language, Race, RaceTemplate, Size},
     skill::Skills,
+    view::tui::render_character,
 };
 use std::{
     collections::HashMap,
@@ -21,15 +24,6 @@ use tui::{
 };
 
 fn ui<B: Backend>(f: &mut Frame<B>) {
-    let abilities = Abilities::from(AbilitiesTemplate {
-        strength: 10,
-        dexterity: 16,
-        constitution: 19,
-        intelligence: 20,
-        wisdom: 10,
-        charisma: 10,
-    });
-
     let character = Character {
         name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
         alignment: (Conformity::Lawful, Morality::Neutral),
@@ -41,7 +35,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             flaws: vec![],
         },
         race: Race::from(RaceTemplate {
-            name: "".into(),
+            name: "Haskellian".into(),
             creature_type: CreatureType::Humanoid,
             size: Size::Medium,
             walking_speed: 30,
@@ -51,14 +45,29 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             languages: vec![Language::Common],
             features: vec![],
         }),
-        abilities,
-        classes: vec![],
+        abilities: Abilities::from(AbilitiesTemplate {
+            strength: 10,
+            dexterity: 16,
+            constitution: 19,
+            intelligence: 20,
+            wisdom: 10,
+            charisma: 10,
+        }),
+        classes: vec![Class::try_from(ClassTemplate {
+            name: "Artificer".into(),
+            level: 12,
+            saving_throw_proficiencies: HashMap::from([
+                (Ability::Constitution, Proficiency::Proficiency),
+                (Ability::Intelligence, Proficiency::Proficiency),
+            ]),
+        })
+        .unwrap()],
         skills: Skills::default(),
         items: Items::default(),
         exhaustion_level: 0,
     };
 
-    character.render_tui(f, f.size());
+    render_character(f, f.size(), &character);
 }
 
 fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stdout>>> {

@@ -57,6 +57,40 @@ pub struct Character {
 }
 
 impl Character {
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn get_race_name(&self) -> &str {
+        self.race.get_name()
+    }
+
+    pub fn get_class_details(&self) -> String {
+        self.classes.iter().fold(String::from(""), |acc, class| {
+            format!(
+                "{acc} {} {}",
+                class.get_name(),
+                class.get_level().to_string()
+            )
+        })
+    }
+
+    pub fn get_current_hit_points(&self) -> isize {
+        111
+    }
+
+    pub fn get_hit_points_max(&self) -> usize {
+        111
+    }
+
+    pub fn get_initiative(&self) -> isize {
+        self.abilities.get_modifier(&Ability::Dexterity)
+    }
+
+    pub fn get_armor_class(&self) -> usize {
+        23
+    }
+
     pub fn get_creature_type(&self) -> &CreatureType {
         self.race.get_creature_type()
     }
