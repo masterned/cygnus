@@ -6,7 +6,7 @@ use crossterm::{
 use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
-    class::{Class, ClassTemplate},
+    class::{Class, ClassTemplate, Classes},
     item::Items,
     modifiers::Proficiency,
     race::{CreatureType, Language, Race, RaceTemplate, Size},
@@ -24,7 +24,7 @@ use tui::{
 };
 
 fn ui<B: Backend>(f: &mut Frame<B>) {
-    let character = Character {
+    let mut character = Character {
         name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
         alignment: (Conformity::Lawful, Morality::Neutral),
         gender: Some(Gender::Male),
@@ -53,7 +53,13 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             wisdom: 10,
             charisma: 10,
         }),
-        classes: vec![Class::try_from(ClassTemplate {
+        classes: Classes::default(),
+        skills: Skills::default(),
+        items: Items::default(),
+        exhaustion_level: 0,
+    };
+    character.add_class(
+        Class::try_from(ClassTemplate {
             name: "Artificer".into(),
             level: 12,
             saving_throw_proficiencies: HashMap::from([
@@ -61,11 +67,8 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
                 (Ability::Intelligence, Proficiency::Proficiency),
             ]),
         })
-        .unwrap()],
-        skills: Skills::default(),
-        items: Items::default(),
-        exhaustion_level: 0,
-    };
+        .unwrap(),
+    );
 
     render_character(f, f.size(), &character);
 }
