@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ability::Ability, feature::Feature, modifiers::Resistance};
+use crate::{ability::Abilities, feature::Feature, modifiers::Resistance};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CreatureType {
@@ -56,7 +56,7 @@ pub struct RaceTemplate {
     pub creature_type: CreatureType,
     pub size: Size,
     pub walking_speed: usize,
-    pub abilities: HashMap<Ability, usize>,
+    pub abilities: Abilities,
     pub damage_resistances: HashMap<DamageType, Resistance>,
     pub condition_resistances: HashMap<Condition, Resistance>,
     pub languages: Vec<Language>,
@@ -68,7 +68,7 @@ pub struct Race {
     creature_type: CreatureType,
     size: Size,
     walking_speed: usize,
-    abilities: HashMap<Ability, usize>,
+    abilities: Abilities,
     damage_resistances: HashMap<DamageType, Resistance>,
     condition_resistances: HashMap<Condition, Resistance>,
     languages: Vec<Language>,
@@ -92,8 +92,8 @@ impl Race {
         self.walking_speed
     }
 
-    pub fn get_ability_score_bonus(&self, ability: &Ability) -> usize {
-        *self.abilities.get(ability).unwrap_or(&0)
+    pub fn get_abilities(&self) -> &Abilities {
+        &self.abilities
     }
 
     pub fn get_damage_resistance(&self, damage_type: &DamageType) -> Option<&Resistance> {
@@ -135,6 +135,8 @@ impl From<RaceTemplate> for Race {
 
 #[cfg(test)]
 mod tests {
+    use crate::ability::AbilitiesTemplate;
+
     use super::*;
 
     impl Race {
@@ -144,7 +146,14 @@ mod tests {
                 creature_type: CreatureType::Humanoid,
                 size: Size::Medium,
                 walking_speed: 30,
-                abilities: HashMap::from_iter(Ability::all().iter().map(|&a| (a, 1))),
+                abilities: Abilities::from(AbilitiesTemplate {
+                    strength: Some(1),
+                    dexterity: Some(1),
+                    constitution: Some(1),
+                    intelligence: Some(1),
+                    wisdom: Some(1),
+                    charisma: Some(1),
+                }),
                 damage_resistances: HashMap::new(),
                 condition_resistances: HashMap::new(),
                 languages: vec![Language::Common],
@@ -158,7 +167,11 @@ mod tests {
                 creature_type: CreatureType::Humanoid,
                 size: Size::Medium,
                 walking_speed: 30,
-                abilities: HashMap::from([(Ability::Intelligence, 2), (Ability::Dexterity, 1)]),
+                abilities: Abilities::from(AbilitiesTemplate {
+                    intelligence: Some(2),
+                    dexterity: Some(1),
+                    ..AbilitiesTemplate::default()
+                }),
                 damage_resistances: HashMap::from([(DamageType::Necrotic, Resistance::Resistant)]),
                 condition_resistances: HashMap::from([(
                     Condition::MagicalSleep,

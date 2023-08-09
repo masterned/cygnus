@@ -1,10 +1,3 @@
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders, Paragraph},
-    Frame,
-};
-
 use crate::{
     ability::{Abilities, Ability},
     class::{Class, Classes},
@@ -78,7 +71,9 @@ impl Character {
     }
 
     pub fn get_initiative(&self) -> isize {
-        self.abilities.get_modifier(&Ability::Dexterity)
+        self.abilities
+            .get_modifier(&Ability::Dexterity)
+            .unwrap_or(0)
     }
 
     pub fn get_armor_class(&self) -> usize {
@@ -112,11 +107,15 @@ impl Character {
     }
 
     pub fn get_ability_score(&self, ability: &Ability) -> usize {
-        self.abilities.get_base_score(ability) + self.race.get_ability_score_bonus(ability)
+        self.get_abilities().get_score(ability).unwrap_or(0)
+    }
+
+    fn get_abilities(&self) -> Abilities {
+        self.abilities + *self.race.get_abilities()
     }
 
     pub fn get_ability_modifier(&self, ability: &Ability) -> isize {
-        Ability::calculate_modifier(self.get_ability_score(ability))
+        self.get_abilities().get_modifier(ability).unwrap_or(0)
     }
 
     pub fn get_level(&self) -> usize {
@@ -189,38 +188,12 @@ impl Character {
     pub fn add_class(&mut self, class: Class) {
         self.classes.add_class(class);
     }
-
-    pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(1)
-            .constraints(
-                [
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(70),
-                    Constraint::Percentage(10),
-                ]
-                .as_ref(),
-            )
-            .split(area);
-
-        let name_block = Paragraph::new(self.name.clone())
-            .block(Block::default().title("Name").borders(Borders::ALL));
-        f.render_widget(name_block, chunks[0]);
-
-        let block = Block::default().title("Abilities").borders(Borders::ALL);
-        f.render_widget(block.clone(), chunks[1]);
-
-        self.abilities.render_tui(f, block.inner(chunks[1]));
-
-        let block = Block::default().title("Body").borders(Borders::ALL);
-        f.render_widget(block, chunks[2]);
-    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::ability::AbilitiesTemplate;
+
     use super::*;
 
     impl Character {
@@ -229,7 +202,14 @@ mod tests {
                 name: "Dummy".into(),
                 alignment: (Conformity::Neutral, Morality::Neutral),
                 gender: None,
-                abilities: Abilities::default(),
+                abilities: Abilities::from(AbilitiesTemplate {
+                    strength: Some(8),
+                    dexterity: Some(8),
+                    constitution: Some(8),
+                    intelligence: Some(8),
+                    wisdom: Some(8),
+                    charisma: Some(8),
+                }),
                 race: Race::human(),
                 classes: Classes::default(),
                 personality: Personality {

@@ -140,38 +140,38 @@ fn render_abilities<B: Backend>(frame: &mut Frame<B>, area: Rect, abilities: &Ab
     render_ability(
         frame,
         layout[1],
-        "STR",
-        abilities.get_base_score(&Ability::Strength),
+        &Ability::Strength.to_string(),
+        abilities.get_score(&Ability::Strength).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[2],
-        "DEX",
-        abilities.get_base_score(&Ability::Dexterity),
+        &Ability::Dexterity.to_string(),
+        abilities.get_score(&Ability::Dexterity).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[3],
-        "CON",
-        abilities.get_base_score(&Ability::Constitution),
+        &Ability::Constitution.to_string(),
+        abilities.get_score(&Ability::Constitution).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[4],
-        "INT",
-        abilities.get_base_score(&Ability::Intelligence),
+        &Ability::Intelligence.to_string(),
+        abilities.get_score(&Ability::Intelligence).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[5],
-        "STR",
-        abilities.get_base_score(&Ability::Wisdom),
+        &Ability::Wisdom.to_string(),
+        abilities.get_score(&Ability::Wisdom).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[6],
-        "CHA",
-        abilities.get_base_score(&Ability::Charisma),
+        &Ability::Charisma.to_string(),
+        abilities.get_score(&Ability::Charisma).unwrap_or(0),
     );
 }
 

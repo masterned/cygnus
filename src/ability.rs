@@ -1,13 +1,6 @@
-use std::collections::BTreeMap;
+use std::{fmt, ops};
 
-use tui::{
-    backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders, Paragraph},
-    Frame,
-};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Ability {
     Strength,
     Dexterity,
@@ -17,120 +10,104 @@ pub enum Ability {
     Charisma,
 }
 
-impl Ability {
-    pub fn all() -> Vec<Self> {
-        vec![
-            Ability::Strength,
-            Ability::Dexterity,
-            Ability::Constitution,
-            Ability::Intelligence,
-            Ability::Wisdom,
-            Ability::Charisma,
-        ]
-    }
-
-    pub fn calculate_modifier(ability_score: usize) -> isize {
-        ability_score as isize / 2 - 5
-    }
-
-    pub fn get_abbreviation(&self) -> &'static str {
+impl fmt::Display for Ability {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Ability::Strength => "STR",
-            Ability::Dexterity => "DEX",
-            Ability::Constitution => "CON",
-            Ability::Intelligence => "INT",
-            Ability::Wisdom => "WIS",
-            Ability::Charisma => "CHA",
+            Ability::Strength => write!(f, "STR"),
+            Ability::Dexterity => write!(f, "DEX"),
+            Ability::Constitution => write!(f, "CON"),
+            Ability::Intelligence => write!(f, "INT"),
+            Ability::Wisdom => write!(f, "WIS"),
+            Ability::Charisma => write!(f, "CHA"),
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct AbilitiesTemplate {
+    pub strength: Option<usize>,
+    pub dexterity: Option<usize>,
+    pub constitution: Option<usize>,
+    pub intelligence: Option<usize>,
+    pub wisdom: Option<usize>,
+    pub charisma: Option<usize>,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Abilities {
+    strength: Option<usize>,
+    dexterity: Option<usize>,
+    constitution: Option<usize>,
+    intelligence: Option<usize>,
+    wisdom: Option<usize>,
+    charisma: Option<usize>,
+}
+
+impl Abilities {
+    #[must_use]
+    pub fn get_score(&self, ability: &Ability) -> Option<usize> {
+        match ability {
+            Ability::Strength => self.strength,
+            Ability::Dexterity => self.dexterity,
+            Ability::Constitution => self.constitution,
+            Ability::Intelligence => self.intelligence,
+            Ability::Wisdom => self.wisdom,
+            Ability::Charisma => self.charisma,
         }
     }
 
-    pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect, score: usize) {
-        let ability_block = Paragraph::new(score.to_string())
-            .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .title(self.get_abbreviation())
-                    .borders(Borders::ALL)
-                    .title_alignment(Alignment::Center),
-            );
-        f.render_widget(ability_block, area);
-    }
-}
-
-pub struct AbilitiesTemplate {
-    pub strength: usize,
-    pub dexterity: usize,
-    pub constitution: usize,
-    pub intelligence: usize,
-    pub wisdom: usize,
-    pub charisma: usize,
-}
-
-pub struct Abilities(pub BTreeMap<Ability, usize>);
-
-impl Abilities {
-    pub fn empty() -> Self {
-        Abilities(BTreeMap::new())
+    pub fn set_score(&mut self, ability: Ability, score: Option<usize>) {
+        match ability {
+            Ability::Strength => self.strength = score,
+            Ability::Dexterity => self.dexterity = score,
+            Ability::Constitution => self.constitution = score,
+            Ability::Intelligence => self.intelligence = score,
+            Ability::Wisdom => self.wisdom = score,
+            Ability::Charisma => self.charisma = score,
+        }
     }
 
-    pub fn get_base_score(&self, ability: &Ability) -> usize {
-        *self.0.get(ability).unwrap_or(&0)
-    }
-
-    pub fn set_score(&mut self, ability: Ability, score: usize) {
-        self.0.insert(ability, score);
-    }
-
-    pub fn get_modifier(&self, ability: &Ability) -> isize {
-        Ability::calculate_modifier(self.get_base_score(ability))
-    }
-
-    pub fn render_tui<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let area = Layout::default()
-            .direction(Direction::Horizontal)
-            .margin(0)
-            .constraints(
-                [
-                    Constraint::Percentage(2),
-                    Constraint::Percentage(16),
-                    Constraint::Percentage(16),
-                    Constraint::Percentage(16),
-                    Constraint::Percentage(16),
-                    Constraint::Percentage(16),
-                    Constraint::Percentage(16),
-                    Constraint::Percentage(2),
-                ]
-                .as_ref(),
-            )
-            .split(area);
-
-        self.0
-            .iter()
-            .enumerate()
-            .for_each(|(i, (ability, score))| ability.render_tui(f, area[i + 1], *score));
-    }
-}
-
-impl Default for Abilities {
-    fn default() -> Self {
-        Abilities(BTreeMap::from_iter(
-            Ability::all().iter().map(|&ability| (ability, 8)),
-        ))
+    #[must_use]
+    pub fn get_modifier(&self, ability: &Ability) -> Option<isize> {
+        self.get_score(ability)
+            .map(|ability_score| ability_score as isize / 2 - 5)
     }
 }
 
 impl From<AbilitiesTemplate> for Abilities {
     fn from(value: AbilitiesTemplate) -> Self {
-        let mut abilities = Abilities::empty();
+        Abilities {
+            strength: value.strength,
+            dexterity: value.dexterity,
+            constitution: value.constitution,
+            intelligence: value.intelligence,
+            wisdom: value.wisdom,
+            charisma: value.charisma,
+        }
+    }
+}
 
-        abilities.set_score(Ability::Strength, value.strength);
-        abilities.set_score(Ability::Dexterity, value.dexterity);
-        abilities.set_score(Ability::Constitution, value.constitution);
-        abilities.set_score(Ability::Intelligence, value.intelligence);
-        abilities.set_score(Ability::Wisdom, value.wisdom);
-        abilities.set_score(Ability::Charisma, value.charisma);
+fn sum_options<T: ops::Add<Output = T>>(o1: Option<T>, o2: Option<T>) -> Option<T> {
+    match (o1, o2) {
+        (Some(v1), Some(v2)) => Some(v1 + v2),
+        (Some(v1), None) => Some(v1),
+        (None, Some(v2)) => Some(v2),
+        _ => None,
+    }
+}
 
-        abilities
+impl ops::Add<Abilities> for Abilities {
+    type Output = Abilities;
+
+    fn add(self, rhs: Abilities) -> Self::Output {
+        Abilities {
+            strength: sum_options(self.strength, rhs.strength),
+            dexterity: sum_options(self.dexterity, rhs.dexterity),
+            constitution: sum_options(self.constitution, rhs.constitution),
+            intelligence: sum_options(self.intelligence, rhs.intelligence),
+            wisdom: sum_options(self.wisdom, rhs.wisdom),
+            charisma: sum_options(self.charisma, rhs.charisma),
+        }
     }
 }
 
@@ -140,24 +117,47 @@ mod tests {
 
     #[test]
     fn _ability_score_of_10_should_have_modifier_of_0() {
-        assert_eq!(Ability::calculate_modifier(10), 0);
+        let abilities = Abilities {
+            strength: Some(10),
+            ..Abilities::default()
+        };
+
+        assert_eq!(abilities.get_modifier(&Ability::Strength), Some(0));
     }
 
     #[test]
     fn _ability_scores_less_than_10_should_have_negative_modifier() {
-        assert_eq!(Ability::calculate_modifier(8), -1);
-        assert_eq!(Ability::calculate_modifier(6), -2);
-        assert_eq!(Ability::calculate_modifier(4), -3);
-        assert_eq!(Ability::calculate_modifier(2), -4);
-        assert_eq!(Ability::calculate_modifier(0), -5);
+        let abilities = Abilities {
+            strength: Some(8),
+            dexterity: Some(6),
+            constitution: Some(4),
+            intelligence: Some(2),
+            wisdom: Some(0),
+            ..Abilities::default()
+        };
+
+        assert_eq!(abilities.get_modifier(&Ability::Strength), Some(-1));
+        assert_eq!(abilities.get_modifier(&Ability::Dexterity), Some(-2));
+        assert_eq!(abilities.get_modifier(&Ability::Constitution), Some(-3));
+        assert_eq!(abilities.get_modifier(&Ability::Intelligence), Some(-4));
+        assert_eq!(abilities.get_modifier(&Ability::Wisdom), Some(-5));
     }
 
     #[test]
     fn _ability_scores_greater_than_10_should_have_positive_modifiers() {
-        assert_eq!(Ability::calculate_modifier(12), 1);
-        assert_eq!(Ability::calculate_modifier(14), 2);
-        assert_eq!(Ability::calculate_modifier(16), 3);
-        assert_eq!(Ability::calculate_modifier(18), 4);
-        assert_eq!(Ability::calculate_modifier(20), 5);
+        let abilities = Abilities {
+            strength: Some(12),
+            dexterity: Some(14),
+            constitution: Some(16),
+            intelligence: Some(18),
+            wisdom: Some(20),
+            ..Abilities::default()
+        };
+
+        assert_eq!(abilities.get_modifier(&Ability::Strength), Some(1));
+        assert_eq!(abilities.get_modifier(&Ability::Dexterity), Some(2));
+        assert_eq!(abilities.get_modifier(&Ability::Constitution), Some(3));
+        assert_eq!(abilities.get_modifier(&Ability::Intelligence), Some(4));
+        assert_eq!(abilities.get_modifier(&Ability::Wisdom), Some(5));
     }
 }
