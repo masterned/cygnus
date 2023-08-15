@@ -132,16 +132,14 @@ impl Spell {
         &self.description
     }
 
-    pub fn get_damage(&self, cast_level: usize) -> Option<DiceRoll> {
+    pub fn get_damage(&self, cast_level: usize) -> Option<&DiceRoll> {
         match self.level {
-            Level::Cantrip => self.damages.get(&((cast_level + 1) / 6)).copied(),
+            Level::Cantrip => self.damages.get(&((cast_level + 1) / 6)),
             Level::Level(lvl) => {
                 if cast_level < lvl {
                     None
                 } else {
-                    self.damages
-                        .get(&((cast_level - lvl) % self.damages.len()))
-                        .copied()
+                    self.damages.get(&((cast_level - lvl) % self.damages.len()))
                 }
             }
         }
@@ -208,17 +206,17 @@ mod tests {
     fn _cantrip_damage_should_improve_on_casters_level() {
         let fire_bolt = Spell::fire_bolt();
 
-        assert_eq!(fire_bolt.get_damage(4), Some(DiceRoll::new(1, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(4), Some(&DiceRoll::new(1, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(5), Some(DiceRoll::new(2, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(5), Some(&DiceRoll::new(2, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(10), Some(DiceRoll::new(2, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(10), Some(&DiceRoll::new(2, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(11), Some(DiceRoll::new(3, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(11), Some(&DiceRoll::new(3, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(16), Some(DiceRoll::new(3, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(16), Some(&DiceRoll::new(3, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(17), Some(DiceRoll::new(4, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(17), Some(&DiceRoll::new(4, 10, 0)));
     }
 
     #[test]
@@ -232,18 +230,18 @@ mod tests {
     fn _leveled_spell_should_improve_damage_on_upcasting() {
         let fireball = Spell::fireball();
 
-        assert_eq!(fireball.get_damage(3), Some(DiceRoll::new(6, 8, 0)));
+        assert_eq!(fireball.get_damage(3), Some(&DiceRoll::new(6, 8, 0)));
 
-        assert_eq!(fireball.get_damage(4), Some(DiceRoll::new(7, 8, 0)));
+        assert_eq!(fireball.get_damage(4), Some(&DiceRoll::new(7, 8, 0)));
 
-        assert_eq!(fireball.get_damage(5), Some(DiceRoll::new(8, 8, 0)));
+        assert_eq!(fireball.get_damage(5), Some(&DiceRoll::new(8, 8, 0)));
 
-        assert_eq!(fireball.get_damage(6), Some(DiceRoll::new(9, 8, 0)));
+        assert_eq!(fireball.get_damage(6), Some(&DiceRoll::new(9, 8, 0)));
 
-        assert_eq!(fireball.get_damage(7), Some(DiceRoll::new(10, 8, 0)));
+        assert_eq!(fireball.get_damage(7), Some(&DiceRoll::new(10, 8, 0)));
 
-        assert_eq!(fireball.get_damage(8), Some(DiceRoll::new(11, 8, 0)));
+        assert_eq!(fireball.get_damage(8), Some(&DiceRoll::new(11, 8, 0)));
 
-        assert_eq!(fireball.get_damage(9), Some(DiceRoll::new(12, 8, 0)));
+        assert_eq!(fireball.get_damage(9), Some(&DiceRoll::new(12, 8, 0)));
     }
 }
