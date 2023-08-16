@@ -3,12 +3,6 @@ use std::collections::HashMap;
 use crate::{ability::Ability, dice::DiceRoll};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Level {
-    Cantrip,
-    Level(usize),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CastingTime {
     Action(usize),
     Reaction(usize),
@@ -74,7 +68,7 @@ pub enum Effect {
 #[derive(Debug)]
 pub struct Spell {
     name: String,
-    level: Level,
+    level: usize,
     casting_time: CastingTime,
     range: Range,
     components: Vec<Component>,
@@ -92,7 +86,7 @@ impl Spell {
         &self.name
     }
 
-    pub fn get_level(&self) -> Level {
+    pub fn get_level(&self) -> usize {
         self.level
     }
 
@@ -134,8 +128,8 @@ impl Spell {
 
     pub fn get_damage(&self, cast_level: usize) -> Option<&DiceRoll> {
         match self.level {
-            Level::Cantrip => self.damages.get(&((cast_level + 1) / 6)),
-            Level::Level(lvl) => {
+            0 => self.damages.get(&((cast_level + 1) / 6)),
+            lvl => {
                 if cast_level < lvl {
                     None
                 } else {
@@ -154,7 +148,7 @@ mod tests {
         fn fire_bolt() -> Self {
             Spell {
                 name: "fire bolt".into(),
-                level: Level::Cantrip,
+                level: 0,
                 casting_time: CastingTime::Action(1),
                 range: Range::Feet(120),
                 components: vec![Component::Verbal, Component::Somatic],
@@ -176,7 +170,7 @@ mod tests {
         fn fireball() -> Self {
             Spell {
                 name: "fireball".into(),
-                level: Level::Level(3),
+                level: 3,
                 casting_time: CastingTime::Action(1),
                 range: Range::Sphere {
                     distance: 150,
