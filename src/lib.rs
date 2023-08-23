@@ -7,4 +7,5 @@ pub mod modifiers;
 pub mod race;
 pub mod skill;
 pub mod spell;
+pub mod utils;
 pub mod view;
