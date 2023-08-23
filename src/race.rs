@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ability::Abilities, feature::Feature, modifiers::Resistance};
+use crate::{ability::Abilities, modifiers::Resistance};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CreatureType {
@@ -51,7 +51,7 @@ pub enum Language {
     Undercommon,
 }
 
-pub struct RaceTemplate {
+pub struct Template {
     pub name: String,
     pub creature_type: CreatureType,
     pub size: Size,
@@ -60,7 +60,6 @@ pub struct RaceTemplate {
     pub damage_resistances: HashMap<DamageType, Resistance>,
     pub condition_resistances: HashMap<Condition, Resistance>,
     pub languages: Vec<Language>,
-    pub features: Vec<Feature>,
 }
 
 pub struct Race {
@@ -72,53 +71,57 @@ pub struct Race {
     damage_resistances: HashMap<DamageType, Resistance>,
     condition_resistances: HashMap<Condition, Resistance>,
     languages: Vec<Language>,
-    features: Vec<Feature>,
 }
 
 impl Race {
+    #[must_use]
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn get_creature_type(&self) -> &CreatureType {
         &self.creature_type
     }
 
+    #[must_use]
     pub fn get_size(&self) -> &Size {
         &self.size
     }
 
+    #[must_use]
     pub fn get_walking_speed(&self) -> usize {
         self.walking_speed
     }
 
+    #[must_use]
     pub fn get_abilities(&self) -> &Abilities {
         &self.abilities
     }
 
+    #[must_use]
     pub fn get_damage_resistance(&self, damage_type: &DamageType) -> Option<&Resistance> {
         self.damage_resistances.get(damage_type)
     }
 
+    #[must_use]
     pub fn get_condition_resistance(&self, condition: &Condition) -> Option<&Resistance> {
         self.condition_resistances.get(condition)
     }
 
+    #[must_use]
     pub fn get_languages(&self) -> &[Language] {
         &self.languages
     }
 
+    #[must_use]
     pub fn can_speak(&self, language: &Language) -> bool {
         self.languages.contains(language)
     }
-
-    pub fn get_features(&self) -> &[Feature] {
-        &self.features
-    }
 }
 
-impl From<RaceTemplate> for Race {
-    fn from(value: RaceTemplate) -> Self {
+impl From<Template> for Race {
+    fn from(value: Template) -> Self {
         Race {
             name: value.name,
             creature_type: value.creature_type,
@@ -128,7 +131,6 @@ impl From<RaceTemplate> for Race {
             damage_resistances: value.damage_resistances,
             condition_resistances: value.condition_resistances,
             languages: value.languages,
-            features: value.features,
         }
     }
 }
@@ -140,6 +142,7 @@ mod tests {
     use super::*;
 
     impl Race {
+        #[must_use]
         pub fn human() -> Self {
             Race {
                 name: "Human".into(),
@@ -157,10 +160,10 @@ mod tests {
                 damage_resistances: HashMap::new(),
                 condition_resistances: HashMap::new(),
                 languages: vec![Language::Common],
-                features: vec![],
             }
         }
 
+        #[must_use]
         pub fn shadar_kai() -> Self {
             Race {
                 name: "Shadar-kai".into(),
@@ -178,7 +181,6 @@ mod tests {
                     Resistance::Immune,
                 )]),
                 languages: vec![Language::Common, Language::Undercommon],
-                features: vec![],
             }
         }
     }

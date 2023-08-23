@@ -6,10 +6,10 @@ use crossterm::{
 use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
-    class::{Class, ClassTemplate, Classes},
+    class::{self, Class, Classes},
     item::Items,
     modifiers::Proficiency,
-    race::{CreatureType, Language, Race, RaceTemplate, Size},
+    race::{self, CreatureType, Language, Race, Size},
     skill::Skills,
     view::tui::render_character,
 };
@@ -34,7 +34,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             bonds: vec![],
             flaws: vec![],
         },
-        race: Race::from(RaceTemplate {
+        race: Race::from(race::Template {
             name: "Haskellian".into(),
             creature_type: CreatureType::Humanoid,
             size: Size::Medium,
@@ -43,7 +43,6 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             damage_resistances: HashMap::new(),
             condition_resistances: HashMap::new(),
             languages: vec![Language::Common],
-            features: vec![],
         }),
         abilities: Abilities::from(AbilitiesTemplate {
             strength: Some(10),
@@ -59,7 +58,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         exhaustion_level: 0,
     };
     character.add_class(
-        Class::try_from(ClassTemplate {
+        Class::try_from(class::Template {
             name: "Artificer".into(),
             level: 12,
             saving_throw_proficiencies: HashMap::from([

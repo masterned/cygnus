@@ -25,26 +25,24 @@ pub enum Skill {
 }
 
 impl Skill {
+    #[must_use]
     pub fn get_ability(&self) -> Ability {
         match self {
-            Skill::Acrobatics => Ability::Dexterity,
-            Skill::AnimalHandling => Ability::Wisdom,
-            Skill::Arcana => Ability::Intelligence,
+            Skill::Acrobatics | Skill::SlightOfHand | Skill::Stealth => Ability::Dexterity,
+            Skill::AnimalHandling
+            | Skill::Insight
+            | Skill::Medicine
+            | Skill::Perception
+            | Skill::Survival => Ability::Wisdom,
+            Skill::Arcana
+            | Skill::History
+            | Skill::Investigation
+            | Skill::Nature
+            | Skill::Religion => Ability::Intelligence,
             Skill::Athletics => Ability::Strength,
-            Skill::Deception => Ability::Charisma,
-            Skill::History => Ability::Intelligence,
-            Skill::Insight => Ability::Wisdom,
-            Skill::Intimidation => Ability::Charisma,
-            Skill::Investigation => Ability::Intelligence,
-            Skill::Medicine => Ability::Wisdom,
-            Skill::Nature => Ability::Intelligence,
-            Skill::Perception => Ability::Wisdom,
-            Skill::Performance => Ability::Charisma,
-            Skill::Persuasion => Ability::Charisma,
-            Skill::Religion => Ability::Intelligence,
-            Skill::SlightOfHand => Ability::Dexterity,
-            Skill::Stealth => Ability::Dexterity,
-            Skill::Survival => Ability::Wisdom,
+            Skill::Deception | Skill::Intimidation | Skill::Performance | Skill::Persuasion => {
+                Ability::Charisma
+            }
         }
     }
 }
@@ -52,6 +50,7 @@ impl Skill {
 pub struct Skills(HashMap<Skill, Option<Proficiency>>);
 
 impl Skills {
+    #[must_use]
     pub fn get_proficiency(&self, skill: &Skill) -> Option<Proficiency> {
         self.0.get(skill).and_then(|&proficiency| proficiency)
     }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ability::Ability, dice::DiceRoll};
+use crate::{ability::Ability, dice::Roll};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CastingTime {
@@ -50,7 +50,7 @@ pub enum AttackType {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SpellAttack {
+pub enum Attack {
     Save(Ability),
     Attack(AttackType),
 }
@@ -75,58 +75,70 @@ pub struct Spell {
     duration: Duration,
     concentration: bool,
     school: School,
-    attack: Option<SpellAttack>,
+    attack: Option<Attack>,
     effect: Effect,
     description: String,
-    damages: HashMap<usize, DiceRoll>,
+    damages: HashMap<usize, Roll>,
 }
 
 impl Spell {
+    #[must_use]
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn get_level(&self) -> usize {
         self.level
     }
 
+    #[must_use]
     pub fn get_casting_time(&self) -> CastingTime {
         self.casting_time
     }
 
+    #[must_use]
     pub fn get_range(&self) -> Range {
         self.range
     }
 
+    #[must_use]
     pub fn get_components(&self) -> &[Component] {
         &self.components
     }
 
+    #[must_use]
     pub fn get_duration(&self) -> Duration {
         self.duration
     }
 
+    #[must_use]
     pub fn get_school(&self) -> School {
         self.school
     }
 
-    pub fn get_attack(&self) -> Option<SpellAttack> {
+    #[must_use]
+    pub fn get_attack(&self) -> Option<Attack> {
         self.attack
     }
 
+    #[must_use]
     pub fn get_effect(&self) -> Effect {
         self.effect
     }
 
+    #[must_use]
     pub fn is_concentration(&self) -> bool {
         self.concentration
     }
 
+    #[must_use]
     pub fn get_description(&self) -> &str {
         &self.description
     }
 
-    pub fn get_damage(&self, cast_level: usize) -> Option<&DiceRoll> {
+    #[must_use]
+    pub fn get_damage(&self, cast_level: usize) -> Option<&Roll> {
         match self.level {
             0 => self.damages.get(&((cast_level + 1) / 6)),
             lvl => {
@@ -155,14 +167,14 @@ mod tests {
                 duration: Duration::Instantaneous,
                 school: School::Evocation,
                 concentration: false,
-                attack: Some(SpellAttack::Attack(AttackType::Ranged)),
+                attack: Some(Attack::Attack(AttackType::Ranged)),
                 effect: Effect::Fire,
                 description: "Say cheese!".into(),
                 damages: HashMap::from([
-                    (0, DiceRoll::new(1, 10, 0)),
-                    (1, DiceRoll::new(2, 10, 0)),
-                    (2, DiceRoll::new(3, 10, 0)),
-                    (3, DiceRoll::new(4, 10, 0)),
+                    (0, Roll::new(1, 10, 0)),
+                    (1, Roll::new(2, 10, 0)),
+                    (2, Roll::new(3, 10, 0)),
+                    (3, Roll::new(4, 10, 0)),
                 ]),
             }
         }
@@ -180,17 +192,17 @@ mod tests {
                 duration: Duration::Instantaneous,
                 concentration: false,
                 school: School::Evocation,
-                attack: Some(SpellAttack::Save(Ability::Dexterity)),
+                attack: Some(Attack::Save(Ability::Dexterity)),
                 effect: Effect::Fire,
                 description: "EXPLOSION!!!".into(),
                 damages: HashMap::from([
-                    (0, DiceRoll::new(6, 8, 0)),
-                    (1, DiceRoll::new(7, 8, 0)),
-                    (2, DiceRoll::new(8, 8, 0)),
-                    (3, DiceRoll::new(9, 8, 0)),
-                    (4, DiceRoll::new(10, 8, 0)),
-                    (5, DiceRoll::new(11, 8, 0)),
-                    (6, DiceRoll::new(12, 8, 0)),
+                    (0, Roll::new(6, 8, 0)),
+                    (1, Roll::new(7, 8, 0)),
+                    (2, Roll::new(8, 8, 0)),
+                    (3, Roll::new(9, 8, 0)),
+                    (4, Roll::new(10, 8, 0)),
+                    (5, Roll::new(11, 8, 0)),
+                    (6, Roll::new(12, 8, 0)),
                 ]),
             }
         }
@@ -200,17 +212,17 @@ mod tests {
     fn _cantrip_damage_should_improve_on_casters_level() {
         let fire_bolt = Spell::fire_bolt();
 
-        assert_eq!(fire_bolt.get_damage(4), Some(&DiceRoll::new(1, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(4), Some(&Roll::new(1, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(5), Some(&DiceRoll::new(2, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(5), Some(&Roll::new(2, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(10), Some(&DiceRoll::new(2, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(10), Some(&Roll::new(2, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(11), Some(&DiceRoll::new(3, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(11), Some(&Roll::new(3, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(16), Some(&DiceRoll::new(3, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(16), Some(&Roll::new(3, 10, 0)));
 
-        assert_eq!(fire_bolt.get_damage(17), Some(&DiceRoll::new(4, 10, 0)));
+        assert_eq!(fire_bolt.get_damage(17), Some(&Roll::new(4, 10, 0)));
     }
 
     #[test]
@@ -224,18 +236,18 @@ mod tests {
     fn _leveled_spell_should_improve_damage_on_upcasting() {
         let fireball = Spell::fireball();
 
-        assert_eq!(fireball.get_damage(3), Some(&DiceRoll::new(6, 8, 0)));
+        assert_eq!(fireball.get_damage(3), Some(&Roll::new(6, 8, 0)));
 
-        assert_eq!(fireball.get_damage(4), Some(&DiceRoll::new(7, 8, 0)));
+        assert_eq!(fireball.get_damage(4), Some(&Roll::new(7, 8, 0)));
 
-        assert_eq!(fireball.get_damage(5), Some(&DiceRoll::new(8, 8, 0)));
+        assert_eq!(fireball.get_damage(5), Some(&Roll::new(8, 8, 0)));
 
-        assert_eq!(fireball.get_damage(6), Some(&DiceRoll::new(9, 8, 0)));
+        assert_eq!(fireball.get_damage(6), Some(&Roll::new(9, 8, 0)));
 
-        assert_eq!(fireball.get_damage(7), Some(&DiceRoll::new(10, 8, 0)));
+        assert_eq!(fireball.get_damage(7), Some(&Roll::new(10, 8, 0)));
 
-        assert_eq!(fireball.get_damage(8), Some(&DiceRoll::new(11, 8, 0)));
+        assert_eq!(fireball.get_damage(8), Some(&Roll::new(11, 8, 0)));
 
-        assert_eq!(fireball.get_damage(9), Some(&DiceRoll::new(12, 8, 0)));
+        assert_eq!(fireball.get_damage(9), Some(&Roll::new(12, 8, 0)));
     }
 }

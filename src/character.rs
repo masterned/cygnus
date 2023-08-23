@@ -50,44 +50,54 @@ pub struct Character {
 }
 
 impl Character {
+    #[must_use]
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn get_race_name(&self) -> &str {
         self.race.get_name()
     }
 
+    #[must_use]
     pub fn get_class_details(&self) -> String {
         self.classes.to_string()
     }
 
+    #[must_use]
     pub fn get_current_hit_points(&self) -> isize {
         111
     }
 
+    #[must_use]
     pub fn get_hit_points_max(&self) -> usize {
         111
     }
 
+    #[must_use]
     pub fn get_initiative(&self) -> isize {
         self.abilities
             .get_modifier(&Ability::Dexterity)
             .unwrap_or(0)
     }
 
+    #[must_use]
     pub fn get_armor_class(&self) -> usize {
         23
     }
 
+    #[must_use]
     pub fn get_creature_type(&self) -> &CreatureType {
         self.race.get_creature_type()
     }
 
+    #[must_use]
     pub fn get_size(&self) -> &Size {
         self.race.get_size()
     }
 
+    #[must_use]
     pub fn get_walking_speed(&self) -> usize {
         let base_speed = self.race.get_walking_speed();
         let encumbrance_modifier = match self.get_variant_encumbrance() {
@@ -106,6 +116,7 @@ impl Character {
         walking_speed
     }
 
+    #[must_use]
     pub fn get_ability_score(&self, ability: &Ability) -> usize {
         self.get_abilities().get_score(ability).unwrap_or(0)
     }
@@ -114,31 +125,36 @@ impl Character {
         self.abilities + *self.race.get_abilities()
     }
 
+    #[must_use]
     pub fn get_ability_modifier(&self, ability: &Ability) -> isize {
         self.get_abilities().get_modifier(ability).unwrap_or(0)
     }
 
+    #[must_use]
     pub fn get_level(&self) -> usize {
         self.classes.get_level()
     }
 
+    #[must_use]
     pub fn get_proficiency_bonus(&self) -> usize {
         self.classes.get_proficiency_bonus()
     }
 
+    #[must_use]
     pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
         self.classes.get_saving_throw_proficiency(ability)
     }
 
+    #[must_use]
     pub fn get_saving_throw_mod(&self, ability: &Ability) -> isize {
         self.get_proficiency_bonus() as isize
             * (self
                 .get_saving_throw_proficiency(ability)
-                .map(|&p| p as isize)
-                .unwrap_or(0))
+                .map_or(0, |&p| p as isize))
             + self.get_ability_modifier(ability)
     }
 
+    #[must_use]
     pub fn get_variant_encumbrance(&self) -> Option<Encumbrance> {
         let total_weight_carried = self.items.get_total_weight();
         let strength_score = self.get_ability_score(&Ability::Strength);
@@ -156,6 +172,7 @@ impl Character {
         self.items.add_item(item);
     }
 
+    #[must_use]
     pub fn get_exhaustion_level(&self) -> usize {
         self.exhaustion_level
     }
@@ -164,6 +181,7 @@ impl Character {
         self.exhaustion_level = new_level;
     }
 
+    #[must_use]
     pub fn get_skill_modifier(&self, skill: &Skill) -> isize {
         self.get_ability_modifier(&skill.get_ability())
             + (match self.skills.get_proficiency(skill) {
@@ -173,14 +191,17 @@ impl Character {
             }) as isize
     }
 
+    #[must_use]
     pub fn get_passive_perception(&self) -> usize {
         (10 + self.get_skill_modifier(&Skill::Perception)) as usize
     }
 
+    #[must_use]
     pub fn get_passive_investigation(&self) -> usize {
         (10 + self.get_skill_modifier(&Skill::Investigation)) as usize
     }
 
+    #[must_use]
     pub fn get_passive_insight(&self) -> usize {
         (10 + self.get_skill_modifier(&Skill::Insight)) as usize
     }

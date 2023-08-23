@@ -12,6 +12,7 @@ pub enum Resistance {
 }
 
 impl Resistance {
+    #[must_use]
     pub fn get_damage_multiplier(&self) -> f32 {
         match self {
             Resistance::Vulnerable => 2.0,

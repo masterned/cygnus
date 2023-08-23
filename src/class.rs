@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt};
 
 use crate::{ability::Ability, modifiers::Proficiency};
 
-pub struct ClassTemplate {
+pub struct Template {
     pub name: String,
     pub level: usize,
     pub saving_throw_proficiencies: HashMap<Ability, Proficiency>,
@@ -15,10 +15,10 @@ pub struct Class {
     saving_throw_proficiencies: HashMap<Ability, Proficiency>,
 }
 
-impl TryFrom<ClassTemplate> for Class {
-    type Error = ClassError;
+impl TryFrom<Template> for Class {
+    type Error = TryFromError;
 
-    fn try_from(value: ClassTemplate) -> Result<Self, Self::Error> {
+    fn try_from(value: Template) -> Result<Self, Self::Error> {
         let mut class = Class {
             name: value.name,
             level: 0,
@@ -30,17 +30,23 @@ impl TryFrom<ClassTemplate> for Class {
 }
 
 impl Class {
+    #[must_use]
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn get_level(&self) -> usize {
         self.level
     }
 
-    pub fn set_level(&mut self, level: usize) -> Result<(), ClassError> {
+    /// # Errors
+    ///
+    /// `LevelOutOfBounds`: when user tries to set lvl above 20
+    ///
+    pub fn set_level(&mut self, level: usize) -> Result<(), TryFromError> {
         if level > 20 {
-            return Err(ClassError::LevelOutOfBounds);
+            return Err(TryFromError::LevelOutOfBounds);
         }
 
         self.level = level;
@@ -48,13 +54,14 @@ impl Class {
         Ok(())
     }
 
+    #[must_use]
     pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
         self.saving_throw_proficiencies.get(ability)
     }
 }
 
 #[derive(Debug)]
-pub enum ClassError {
+pub enum TryFromError {
     LevelOutOfBounds,
 }
 
@@ -67,16 +74,15 @@ impl Classes {
     }
 
     pub fn get_level(&self) -> usize {
-        self.0.iter().map(|class| class.get_level()).sum()
+        self.0.iter().map(Class::get_level).sum()
     }
 
+    #[must_use]
     pub fn get_proficiency_bonus(&self) -> usize {
-        self.get_level()
-            .checked_sub(1)
-            .map(|r| r / 4 + 2)
-            .unwrap_or(0)
+        self.get_level().checked_sub(1).map_or(0, |r| r / 4 + 2)
     }
 
+    #[must_use]
     pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
         self.0
             .first()
@@ -101,6 +107,7 @@ mod tests {
     use super::*;
 
     impl Class {
+        #[must_use]
         pub fn wizard() -> Self {
             Class {
                 name: "Wizard".into(),
@@ -112,6 +119,7 @@ mod tests {
             }
         }
 
+        #[must_use]
         pub fn artificer() -> Self {
             Class {
                 name: "Artificer".into(),

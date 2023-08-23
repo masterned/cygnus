@@ -3,10 +3,12 @@ pub struct Item {
 }
 
 impl Item {
+    #[must_use]
     pub fn new(weight: usize) -> Self {
         Item { weight }
     }
 
+    #[must_use]
     pub fn get_weight(&self) -> usize {
         self.weight
     }
@@ -16,12 +18,13 @@ impl Item {
 pub struct Items(Vec<Item>);
 
 impl Items {
+    #[must_use]
     pub fn get_total_weight(&self) -> usize {
-        self.0.iter().map(|item| item.get_weight()).sum()
+        self.0.iter().map(Item::get_weight).sum()
     }
 
     pub fn add_item(&mut self, item: Item) {
-        self.0.push(item)
+        self.0.push(item);
     }
 }
 
