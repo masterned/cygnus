@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic)]
 use std::collections::BTreeMap;
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LowerBoundMap<K, V>(BTreeMap<K, V>);
 
 impl<K: Ord + Clone, V> LowerBoundMap<K, V> {

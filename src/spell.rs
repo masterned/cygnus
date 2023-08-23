@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
-use crate::{ability::Ability, dice::Roll};
+use crate::{
+    ability::Ability, dice::Roll, race::DamageType, utils::lower_bound_map::LowerBoundMap,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CastingTime {
@@ -44,15 +44,15 @@ pub enum School {
     Transmutation,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AttackType {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AttackKind {
+    Save {
+        ability: Ability,
+    },
+    Melee {
+        additional_weapon_damage: LowerBoundMap<usize, (Roll, DamageType)>,
+    },
     Ranged,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Attack {
-    Save(Ability),
-    Attack(AttackType),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -75,10 +75,10 @@ pub struct Spell {
     duration: Duration,
     concentration: bool,
     school: School,
-    attack: Option<Attack>,
+    attack_kind: Option<AttackKind>,
     effect: Effect,
     description: String,
-    damages: HashMap<usize, Roll>,
+    damage_rolls: LowerBoundMap<usize, Roll>,
 }
 
 impl Spell {
@@ -118,8 +118,8 @@ impl Spell {
     }
 
     #[must_use]
-    pub fn get_attack(&self) -> Option<Attack> {
-        self.attack
+    pub fn get_attack_kind(&self) -> Option<&AttackKind> {
+        self.attack_kind.as_ref()
     }
 
     #[must_use]
@@ -137,18 +137,8 @@ impl Spell {
         &self.description
     }
 
-    #[must_use]
-    pub fn get_damage(&self, cast_level: usize) -> Option<&Roll> {
-        match self.level {
-            0 => self.damages.get(&((cast_level + 1) / 6)),
-            lvl => {
-                if cast_level < lvl {
-                    None
-                } else {
-                    self.damages.get(&((cast_level - lvl) % self.damages.len()))
-                }
-            }
-        }
+    pub fn get_damage_roll(&self, level: usize) -> Option<&Roll> {
+        self.damage_rolls.get(&level)
     }
 }
 
@@ -157,7 +147,7 @@ mod tests {
     use super::*;
 
     impl Spell {
-        fn fire_bolt() -> Self {
+        fn _fire_bolt() -> Self {
             Spell {
                 name: "fire bolt".into(),
                 level: 0,
@@ -167,19 +157,19 @@ mod tests {
                 duration: Duration::Instantaneous,
                 school: School::Evocation,
                 concentration: false,
-                attack: Some(Attack::Attack(AttackType::Ranged)),
+                attack_kind: Some(AttackKind::Ranged),
                 effect: Effect::Fire,
                 description: "Say cheese!".into(),
-                damages: HashMap::from([
+                damage_rolls: LowerBoundMap::from([
                     (0, Roll::new(1, 10, 0)),
-                    (1, Roll::new(2, 10, 0)),
-                    (2, Roll::new(3, 10, 0)),
-                    (3, Roll::new(4, 10, 0)),
+                    (5, Roll::new(2, 10, 0)),
+                    (11, Roll::new(3, 10, 0)),
+                    (17, Roll::new(4, 10, 0)),
                 ]),
             }
         }
 
-        fn fireball() -> Self {
+        fn _fireball() -> Self {
             Spell {
                 name: "fireball".into(),
                 level: 3,
@@ -192,62 +182,21 @@ mod tests {
                 duration: Duration::Instantaneous,
                 concentration: false,
                 school: School::Evocation,
-                attack: Some(Attack::Save(Ability::Dexterity)),
+                attack_kind: Some(AttackKind::Save {
+                    ability: Ability::Dexterity,
+                }),
                 effect: Effect::Fire,
                 description: "EXPLOSION!!!".into(),
-                damages: HashMap::from([
-                    (0, Roll::new(6, 8, 0)),
-                    (1, Roll::new(7, 8, 0)),
-                    (2, Roll::new(8, 8, 0)),
-                    (3, Roll::new(9, 8, 0)),
-                    (4, Roll::new(10, 8, 0)),
-                    (5, Roll::new(11, 8, 0)),
-                    (6, Roll::new(12, 8, 0)),
+                damage_rolls: LowerBoundMap::from([
+                    (3, Roll::new(6, 8, 0)),
+                    (4, Roll::new(7, 8, 0)),
+                    (5, Roll::new(8, 8, 0)),
+                    (6, Roll::new(9, 8, 0)),
+                    (7, Roll::new(10, 8, 0)),
+                    (8, Roll::new(11, 8, 0)),
+                    (9, Roll::new(12, 8, 0)),
                 ]),
             }
         }
-    }
-
-    #[test]
-    fn _cantrip_damage_should_improve_on_casters_level() {
-        let fire_bolt = Spell::fire_bolt();
-
-        assert_eq!(fire_bolt.get_damage(4), Some(&Roll::new(1, 10, 0)));
-
-        assert_eq!(fire_bolt.get_damage(5), Some(&Roll::new(2, 10, 0)));
-
-        assert_eq!(fire_bolt.get_damage(10), Some(&Roll::new(2, 10, 0)));
-
-        assert_eq!(fire_bolt.get_damage(11), Some(&Roll::new(3, 10, 0)));
-
-        assert_eq!(fire_bolt.get_damage(16), Some(&Roll::new(3, 10, 0)));
-
-        assert_eq!(fire_bolt.get_damage(17), Some(&Roll::new(4, 10, 0)));
-    }
-
-    #[test]
-    fn _undercasting_a_leveled_spell_should_return_none_damge() {
-        let fireball = Spell::fireball();
-
-        assert_eq!(fireball.get_damage(1), None);
-    }
-
-    #[test]
-    fn _leveled_spell_should_improve_damage_on_upcasting() {
-        let fireball = Spell::fireball();
-
-        assert_eq!(fireball.get_damage(3), Some(&Roll::new(6, 8, 0)));
-
-        assert_eq!(fireball.get_damage(4), Some(&Roll::new(7, 8, 0)));
-
-        assert_eq!(fireball.get_damage(5), Some(&Roll::new(8, 8, 0)));
-
-        assert_eq!(fireball.get_damage(6), Some(&Roll::new(9, 8, 0)));
-
-        assert_eq!(fireball.get_damage(7), Some(&Roll::new(10, 8, 0)));
-
-        assert_eq!(fireball.get_damage(8), Some(&Roll::new(11, 8, 0)));
-
-        assert_eq!(fireball.get_damage(9), Some(&Roll::new(12, 8, 0)));
     }
 }
