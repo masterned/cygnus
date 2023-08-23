@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{collections::BTreeMap, fmt};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Die {
@@ -14,7 +14,7 @@ impl fmt::Display for Die {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Roll {
-    dice: Vec<Die>,
+    dice: BTreeMap<usize, Die>,
     modifier: isize,
 }
 
@@ -22,19 +22,16 @@ impl Roll {
     #[must_use]
     pub fn new(count: usize, sides: usize, modifier: isize) -> Self {
         Roll {
-            dice: vec![Die { sides, count }],
+            dice: BTreeMap::from([(sides, Die { sides, count })]),
             modifier,
         }
     }
 
     pub fn add_die(&mut self, count: usize, sides: usize) {
-        if let Some(die) = self.dice.iter_mut().find(|die| die.sides == sides) {
-            die.count += count;
-        } else {
-            self.dice.push(Die { sides, count });
-        }
-
-        self.dice.sort();
+        self.dice
+            .entry(sides)
+            .and_modify(|die| die.count += count)
+            .or_insert(Die { sides, count });
     }
 }
 
@@ -46,13 +43,12 @@ impl fmt::Display for Roll {
             _ => String::new(),
         };
 
-        let dice = self
-            .dice
-            .split_first()
-            .map_or(String::new(), |(head, tail)| {
-                tail.iter()
-                    .fold(head.to_string(), |acc, die| format!("{acc} + {die}"))
-            });
+        let dice = self.dice.values().skip(1).fold(
+            self.dice
+                .first_key_value()
+                .map_or(String::new(), |(_, first_die)| first_die.to_string()),
+            |acc, die| format!("{acc} + {die}"),
+        );
 
         write!(f, "{dice}{modifier}")
     }
