@@ -1,11 +1,12 @@
 use std::{collections::HashMap, fmt};
 
-use crate::{ability::Ability, modifiers::Proficiency};
+use crate::{ability::Ability, modifiers::Proficiency, spell::SpellList};
 
 pub struct Template {
     pub name: String,
     pub level: usize,
     pub saving_throw_proficiencies: HashMap<Ability, Proficiency>,
+    pub spell_list: Option<SpellList>,
 }
 
 #[derive(Debug)]
@@ -13,6 +14,7 @@ pub struct Class {
     name: String,
     level: usize,
     saving_throw_proficiencies: HashMap<Ability, Proficiency>,
+    spell_list: Option<SpellList>,
 }
 
 impl TryFrom<Template> for Class {
@@ -23,6 +25,7 @@ impl TryFrom<Template> for Class {
             name: value.name,
             level: 0,
             saving_throw_proficiencies: value.saving_throw_proficiencies,
+            spell_list: value.spell_list,
         };
         class.set_level(value.level)?;
         Ok(class)
@@ -57,6 +60,10 @@ impl Class {
     #[must_use]
     pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
         self.saving_throw_proficiencies.get(ability)
+    }
+
+    pub fn get_spell_list(&self) -> Option<&SpellList> {
+        self.spell_list.as_ref()
     }
 }
 
@@ -116,6 +123,7 @@ mod tests {
                     (Ability::Intelligence, Proficiency::Proficiency),
                     (Ability::Wisdom, Proficiency::Proficiency),
                 ]),
+                spell_list: Some(SpellList::default()),
             }
         }
 
@@ -128,6 +136,7 @@ mod tests {
                     (Ability::Intelligence, Proficiency::Proficiency),
                     (Ability::Constitution, Proficiency::Proficiency),
                 ]),
+                spell_list: Some(SpellList::default()),
             }
         }
     }
@@ -152,6 +161,7 @@ mod tests {
             name: "lvl4".into(),
             level: 4,
             saving_throw_proficiencies: HashMap::new(),
+            spell_list: None,
         }]);
         assert_eq!(lvl4.get_proficiency_bonus(), 2);
 
@@ -159,6 +169,7 @@ mod tests {
             name: "lvl5".into(),
             level: 5,
             saving_throw_proficiencies: HashMap::new(),
+            spell_list: None,
         }]);
         assert_eq!(lvl5.get_proficiency_bonus(), 3);
 
@@ -166,6 +177,7 @@ mod tests {
             name: "lvl9".into(),
             level: 9,
             saving_throw_proficiencies: HashMap::new(),
+            spell_list: None,
         }]);
         assert_eq!(lvl9.get_proficiency_bonus(), 4);
 
@@ -173,6 +185,7 @@ mod tests {
             name: "lvl13".into(),
             level: 13,
             saving_throw_proficiencies: HashMap::new(),
+            spell_list: None,
         }]);
         assert_eq!(lvl13.get_proficiency_bonus(), 5);
 
@@ -180,6 +193,7 @@ mod tests {
             name: "lvl17".into(),
             level: 17,
             saving_throw_proficiencies: HashMap::new(),
+            spell_list: None,
         }]);
         assert_eq!(lvl17.get_proficiency_bonus(), 6);
     }

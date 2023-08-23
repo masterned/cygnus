@@ -11,6 +11,7 @@ use cygnus::{
     modifiers::Proficiency,
     race::{self, CreatureType, Language, Race, Size},
     skill::Skills,
+    spell::SpellList,
     view::tui::render_character,
 };
 use std::{
@@ -65,6 +66,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
                 (Ability::Constitution, Proficiency::Proficiency),
                 (Ability::Intelligence, Proficiency::Proficiency),
             ]),
+            spell_list: Some(SpellList::default()),
         })
         .unwrap(),
     );

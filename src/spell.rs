@@ -142,6 +142,15 @@ impl Spell {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct SpellList(Vec<Spell>);
+
+impl From<Vec<Spell>> for SpellList {
+    fn from(value: Vec<Spell>) -> Self {
+        Self(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
