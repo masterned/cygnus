@@ -47,6 +47,7 @@ pub struct Character {
     pub skills: Skills,
     pub items: Items,
     pub exhaustion_level: usize,
+    pub damage: usize,
 }
 
 impl Character {
@@ -67,12 +68,13 @@ impl Character {
 
     #[must_use]
     pub fn get_current_hit_points(&self) -> isize {
-        111
+        self.get_hit_points_max() as isize - self.damage as isize
     }
 
     #[must_use]
     pub fn get_hit_points_max(&self) -> usize {
-        111
+        self.classes
+            .get_hit_points(self.get_ability_modifier(&Ability::Constitution))
     }
 
     #[must_use]
@@ -242,6 +244,7 @@ mod tests {
                 skills: Skills::default(),
                 items: Items::default(),
                 exhaustion_level: 0,
+                damage: 0,
             }
         }
     }

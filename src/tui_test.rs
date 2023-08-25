@@ -6,7 +6,7 @@ use crossterm::{
 use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
-    class::{self, Class, Classes},
+    class::{self, Class, Classes, HPIncreases},
     item::Items,
     modifiers::Proficiency,
     race::{self, CreatureType, Language, Race, Size},
@@ -57,6 +57,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         skills: Skills::default(),
         items: Items::default(),
         exhaustion_level: 0,
+        damage: 0,
     };
     character.add_class(
         Class::try_from(class::Template {
@@ -67,6 +68,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
                 (Ability::Intelligence, Proficiency::Proficiency),
             ]),
             spell_list: Some(SpellList::default()),
+            hp_increases: HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]).unwrap(),
         })
         .unwrap(),
     );

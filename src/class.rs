@@ -1,12 +1,76 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, error, fmt};
 
 use crate::{ability::Ability, modifiers::Proficiency, spell::SpellList};
+
+#[derive(Debug, Default)]
+pub struct HPIncreases(Vec<usize>);
+
+impl HPIncreases {
+    #[must_use]
+    pub fn new(hit_die_sides: usize) -> Self {
+        HPIncreases(vec![hit_die_sides])
+    }
+
+    #[must_use]
+    pub fn get_hit_points(&self, constitution_modifier: isize) -> usize {
+        let increase_count = self.0.len() as isize;
+
+        (self.0.iter().sum::<usize>() as isize + (constitution_modifier * increase_count)) as usize
+    }
+
+    ///
+    /// # Errors
+    ///
+    /// - `IncorrectNumberOfIncreases`: if the caller tries to add more than 20 increases
+    ///
+    pub fn add_increase(&mut self, increase: usize) -> Result<(), HPIncreaseConstructionError> {
+        if self.0.len() >= 20 {
+            return Err(HPIncreaseConstructionError::IncorrectNumberOfIncreases);
+        }
+
+        self.0.push(increase);
+
+        Ok(())
+    }
+}
+
+impl TryFrom<Vec<usize>> for HPIncreases {
+    type Error = HPIncreaseConstructionError;
+
+    fn try_from(value: Vec<usize>) -> Result<Self, Self::Error> {
+        if value.len() > 20 {
+            return Err(HPIncreaseConstructionError::IncorrectNumberOfIncreases);
+        }
+
+        Ok(HPIncreases(value))
+    }
+}
+
+#[derive(Debug)]
+pub enum HPIncreaseConstructionError {
+    IncorrectNumberOfIncreases,
+}
+
+impl fmt::Display for HPIncreaseConstructionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            HPIncreaseConstructionError::IncorrectNumberOfIncreases => {
+                "Cannot have more increases than maximum level."
+            }
+        };
+
+        write!(f, "{result}")
+    }
+}
+
+impl error::Error for HPIncreaseConstructionError {}
 
 pub struct Template {
     pub name: String,
     pub level: usize,
     pub saving_throw_proficiencies: HashMap<Ability, Proficiency>,
     pub spell_list: Option<SpellList>,
+    pub hp_increases: HPIncreases,
 }
 
 #[derive(Debug)]
@@ -15,6 +79,7 @@ pub struct Class {
     level: usize,
     saving_throw_proficiencies: HashMap<Ability, Proficiency>,
     spell_list: Option<SpellList>,
+    hp_increases: HPIncreases,
 }
 
 impl TryFrom<Template> for Class {
@@ -26,6 +91,7 @@ impl TryFrom<Template> for Class {
             level: 0,
             saving_throw_proficiencies: value.saving_throw_proficiencies,
             spell_list: value.spell_list,
+            hp_increases: value.hp_increases,
         };
         class.set_level(value.level)?;
         Ok(class)
@@ -65,6 +131,11 @@ impl Class {
     pub fn get_spell_list(&self) -> Option<&SpellList> {
         self.spell_list.as_ref()
     }
+
+    #[must_use]
+    pub fn get_hit_points(&self, constitution_modifier: isize) -> usize {
+        self.hp_increases.get_hit_points(constitution_modifier)
+    }
 }
 
 #[derive(Debug)]
@@ -95,6 +166,13 @@ impl Classes {
             .first()
             .and_then(|primary_class| primary_class.get_saving_throw_proficiency(ability))
     }
+
+    #[must_use]
+    pub fn get_hit_points(&self, constitution_modifier: isize) -> usize {
+        self.0.iter().fold(0, |acc, class| {
+            class.get_hit_points(constitution_modifier) + acc
+        })
+    }
 }
 
 impl fmt::Display for Classes {
@@ -124,6 +202,7 @@ mod tests {
                     (Ability::Wisdom, Proficiency::Proficiency),
                 ]),
                 spell_list: Some(SpellList::default()),
+                hp_increases: HPIncreases::new(6),
             }
         }
 
@@ -137,6 +216,118 @@ mod tests {
                     (Ability::Constitution, Proficiency::Proficiency),
                 ]),
                 spell_list: Some(SpellList::default()),
+                hp_increases: HPIncreases::new(8),
+            }
+        }
+    }
+
+    mod hp_increase {
+        use super::*;
+
+        mod construct {
+            use std::error::Error;
+
+            use super::*;
+
+            #[test]
+            fn _default_should_be_empty() {
+                let hpi = HPIncreases::default();
+
+                assert!(hpi.0.is_empty(), "should be empty");
+            }
+
+            #[test]
+            fn _new_should_contain_the_single_starting_hp() {
+                let hpi = HPIncreases::new(10);
+
+                assert_eq!(hpi.0, vec![10]);
+            }
+
+            #[test]
+            fn _creating_from_vec_with_20_or_less_increases_should_be_successful(
+            ) -> Result<(), Box<dyn Error>> {
+                let hpi = HPIncreases::try_from(vec![1, 2, 3, 4])?;
+
+                assert_eq!(hpi.0, vec![1, 2, 3, 4]);
+
+                Ok(())
+            }
+
+            #[test]
+            fn _create_from_vec_with_over_20_increases_should_result_in_error() {
+                let hpi = HPIncreases::try_from(vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                ]);
+
+                assert!(hpi.is_err(), "should result in error");
+            }
+        }
+
+        mod get_hit_points {
+            use super::*;
+
+            #[test]
+            fn _should_return_0_on_empty_hp_increases_without_con_mod() {
+                let hpi = HPIncreases::default();
+
+                assert_eq!(hpi.get_hit_points(0), 0);
+            }
+
+            #[test]
+            fn _should_return_0_on_empty_hp_increases_with_con_mod() {
+                let hpi = HPIncreases::default();
+
+                assert_eq!(hpi.get_hit_points(3), 0);
+            }
+
+            #[test]
+            fn _should_sum_increases_without_con_mod() {
+                let hpi = HPIncreases(vec![8, 5, 5, 5, 5]);
+
+                assert_eq!(hpi.get_hit_points(0), 28);
+            }
+
+            #[test]
+            fn _should_add_con_mod_to_each_increase_before_summing() {
+                let hpi = HPIncreases(vec![8, 5, 5, 5, 5]);
+
+                assert_eq!(hpi.get_hit_points(3), 43);
+            }
+        }
+
+        mod add_increase {
+            use std::error::Error;
+
+            use super::*;
+
+            #[test]
+            fn _should_add_new_increase_to_collection() -> Result<(), Box<dyn Error>> {
+                let mut hpi = HPIncreases::default();
+                hpi.add_increase(3)?;
+
+                assert_eq!(hpi.0, vec![3]);
+
+                Ok(())
+            }
+
+            #[test]
+            fn _should_add_increase_to_end() -> Result<(), Box<dyn Error>> {
+                let mut hpi = HPIncreases(vec![1, 2, 3]);
+                hpi.add_increase(4)?;
+
+                assert_eq!(hpi.0, vec![1, 2, 3, 4]);
+
+                Ok(())
+            }
+
+            #[test]
+            fn _should_result_in_error_when_trying_to_add_more_than_20_increases() {
+                let mut hpi = HPIncreases(vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                ]);
+                let result = hpi.add_increase(21);
+
+                assert!(result.is_err(), "should result in error");
             }
         }
     }
@@ -162,6 +353,7 @@ mod tests {
             level: 4,
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
+            hp_increases: HPIncreases::default(),
         }]);
         assert_eq!(lvl4.get_proficiency_bonus(), 2);
 
@@ -170,6 +362,7 @@ mod tests {
             level: 5,
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
+            hp_increases: HPIncreases::default(),
         }]);
         assert_eq!(lvl5.get_proficiency_bonus(), 3);
 
@@ -178,6 +371,7 @@ mod tests {
             level: 9,
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
+            hp_increases: HPIncreases::default(),
         }]);
         assert_eq!(lvl9.get_proficiency_bonus(), 4);
 
@@ -186,6 +380,7 @@ mod tests {
             level: 13,
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
+            hp_increases: HPIncreases::default(),
         }]);
         assert_eq!(lvl13.get_proficiency_bonus(), 5);
 
@@ -194,6 +389,7 @@ mod tests {
             level: 17,
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
+            hp_increases: HPIncreases::default(),
         }]);
         assert_eq!(lvl17.get_proficiency_bonus(), 6);
     }
