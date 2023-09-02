@@ -96,7 +96,7 @@ impl ItemSlots {
         self.0
             .values()
             .filter_map(|slot| slot.value.as_ref())
-            .any(|item| item_criteria(item))
+            .any(item_criteria)
     }
 
     pub fn get_total_weight(&self) -> usize {
