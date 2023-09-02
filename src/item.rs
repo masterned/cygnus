@@ -1,20 +1,35 @@
+#[derive(Clone, Debug, PartialEq)]
 pub struct Item {
+    name: String,
     weight: usize,
+    types: Vec<String>,
 }
 
 impl Item {
     #[must_use]
-    pub fn new(weight: usize) -> Self {
-        Item { weight }
+    pub fn new(name: impl Into<String>, weight: usize, types: Vec<String>) -> Self {
+        Item {
+            name: name.into(),
+            weight,
+            types,
+        }
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
     }
 
     #[must_use]
     pub fn get_weight(&self) -> usize {
         self.weight
     }
+
+    pub fn has_type(&self, item_type: impl Into<String>) -> bool {
+        self.types.contains(&item_type.into())
+    }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Items(Vec<Item>);
 
 impl Items {
@@ -42,9 +57,21 @@ mod tests {
     #[test]
     fn _should_accumulate_total_weight() {
         let items = Items(vec![
-            Item { weight: 1 },
-            Item { weight: 2 },
-            Item { weight: 3 },
+            Item {
+                name: String::from("one"),
+                weight: 1,
+                types: vec![],
+            },
+            Item {
+                name: String::from("two"),
+                weight: 2,
+                types: vec![],
+            },
+            Item {
+                name: String::from("three"),
+                weight: 3,
+                types: vec![],
+            },
         ]);
 
         assert_eq!(items.get_total_weight(), 6);
