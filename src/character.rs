@@ -7,7 +7,7 @@ use crate::{
     modifiers::{Encumbrance, Proficiency},
     race::{CreatureType, Race, Size},
     skill::{Skill, Skills},
-    slot::{ItemSlots, SlotsError},
+    slot::{ItemSlots, Slot, SlotsError},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -160,9 +160,13 @@ impl Character {
             + self.get_ability_modifier(ability)
     }
 
+    pub fn get_total_weight_carried(&self) -> usize {
+        self.items.get_total_weight() + self.equipment.get_total_weight()
+    }
+
     #[must_use]
     pub fn get_variant_encumbrance(&self) -> Option<Encumbrance> {
-        let total_weight_carried = self.items.get_total_weight();
+        let total_weight_carried = self.get_total_weight_carried();
         let strength_score = self.get_ability_score(&Ability::Strength);
 
         if total_weight_carried > (10 * strength_score) {
@@ -214,6 +218,14 @@ impl Character {
 
     pub fn add_class(&mut self, class: Class) {
         self.classes.add_class(class);
+    }
+
+    pub fn add_equipment_slot(
+        &mut self,
+        slot_name: impl Into<String>,
+        slot: Slot<Item, fn(&Item) -> bool>,
+    ) {
+        self.equipment.add_slot(slot_name, slot);
     }
 
     pub fn equip_item(&mut self, item: Item, slot_name: impl Into<String>) -> CharacterResult<()> {
@@ -353,6 +365,18 @@ mod tests {
             character.get_variant_encumbrance(),
             Some(Encumbrance::HeavilyEncumbered)
         );
+    }
+
+    #[test]
+    fn _should_include_inventory_and_equipment_in_total_carried_weight() {
+        let mut character = Character::dummy();
+
+        character.add_item(Item::new("Rapier", 2, vec!["weapon".into()]));
+
+        character.add_equipment_slot("armor", Slot::new(|_: &Item| true));
+        let _ = character.equip_item(Item::new("Chain Mail", 55, vec!["armor".into()]), "armor");
+
+        assert_eq!(character.get_total_weight_carried(), 57);
     }
 
     #[test]

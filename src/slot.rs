@@ -98,6 +98,14 @@ impl ItemSlots {
             .filter_map(|slot| slot.value.as_ref())
             .any(|item| item_criteria(item))
     }
+
+    pub fn get_total_weight(&self) -> usize {
+        self.0
+            .values()
+            .filter_map(|slot| slot.value.as_ref())
+            .map(|item| item.get_weight())
+            .sum()
+    }
 }
 
 #[derive(Debug)]
@@ -222,6 +230,18 @@ mod tests {
             assert!(equipment.has_item_equipped_matching_criteria(armor_criteria));
 
             Ok(())
+        }
+
+        #[test]
+        fn _should_return_the_total_weight_of_equipped_items() {
+            let mut equipment = ItemSlots::default();
+            equipment.add_slot("armor", Slot::new(|_: &Item| true));
+            equipment.add_slot("right hand", Slot::new(|_: &Item| true));
+
+            let _ = equipment.equip(Item::new("Chain Mail", 55, vec!["armor".into()]), "armor");
+            let _ = equipment.equip(Item::new("Rapier", 2, vec!["weapon".into()]), "right hand");
+
+            assert_eq!(equipment.get_total_weight(), 57);
         }
     }
 }
