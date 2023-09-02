@@ -11,6 +11,7 @@ use cygnus::{
     modifiers::Proficiency,
     race::{self, CreatureType, Language, Race, Size},
     skill::Skills,
+    slot::ItemSlots,
     spell::SpellList,
     view::tui::render_character,
 };
@@ -58,6 +59,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         items: Items::default(),
         exhaustion_level: 0,
         damage: 0,
+        equipment: ItemSlots::default(),
     };
     character.add_class(
         Class::try_from(class::Template {

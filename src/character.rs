@@ -1,3 +1,5 @@
+use std::{error, fmt};
+
 use crate::{
     ability::{Abilities, Ability},
     class::{Class, Classes},
@@ -5,6 +7,7 @@ use crate::{
     modifiers::{Encumbrance, Proficiency},
     race::{CreatureType, Race, Size},
     skill::{Skill, Skills},
+    slot::{ItemSlots, SlotsError},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -46,6 +49,7 @@ pub struct Character {
     pub classes: Classes,
     pub skills: Skills,
     pub items: Items,
+    pub equipment: ItemSlots,
     pub exhaustion_level: usize,
     pub damage: usize,
 }
@@ -211,7 +215,43 @@ impl Character {
     pub fn add_class(&mut self, class: Class) {
         self.classes.add_class(class);
     }
+
+    pub fn equip_item(&mut self, item: Item, slot_name: impl Into<String>) -> CharacterResult<()> {
+        self.equipment.equip(item, slot_name)?;
+
+        Ok(())
+    }
+
+    pub fn has_item_equipped_matching_criteria(&self, item_criteria: fn(&Item) -> bool) -> bool {
+        self.equipment
+            .has_item_equipped_matching_criteria(item_criteria)
+    }
 }
+
+type CharacterResult<T> = Result<T, Error>;
+
+#[derive(Debug)]
+pub enum Error {
+    Equipment(SlotsError),
+}
+
+impl From<SlotsError> for Error {
+    fn from(value: SlotsError) -> Self {
+        Error::Equipment(value)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            Error::Equipment(e) => format!("Equipment: {e}"),
+        };
+
+        write!(f, "{result}")
+    }
+}
+
+impl error::Error for Error {}
 
 #[cfg(test)]
 mod tests {
@@ -245,6 +285,7 @@ mod tests {
                 items: Items::default(),
                 exhaustion_level: 0,
                 damage: 0,
+                equipment: ItemSlots::default(),
             }
         }
     }
@@ -295,7 +336,7 @@ mod tests {
     #[test]
     fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(46));
+        character.add_item(Item::new("test", 46, vec![]));
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -306,7 +347,7 @@ mod tests {
     #[test]
     fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(91));
+        character.add_item(Item::new("test", 91, vec![]));
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -317,7 +358,7 @@ mod tests {
     #[test]
     fn _encumbered_characters_should_reduce_their_speed_by_10() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(46));
+        character.add_item(Item::new("test", 46, vec![]));
 
         assert_eq!(character.get_walking_speed(), 20);
     }
@@ -325,7 +366,7 @@ mod tests {
     #[test]
     fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() {
         let mut character = Character::dummy();
-        character.add_item(Item::new(91));
+        character.add_item(Item::new("test", 91, vec![]));
 
         assert_eq!(character.get_walking_speed(), 10);
     }
