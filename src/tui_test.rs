@@ -56,7 +56,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         }),
         classes: Classes::default(),
         skills: Skills::default(),
-        items: Items::default(),
+        inventory: Items::default(),
         exhaustion_level: 0,
         damage: 0,
         equipment: ItemSlots::default(),

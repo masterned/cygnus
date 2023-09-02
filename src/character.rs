@@ -48,7 +48,7 @@ pub struct Character {
     pub abilities: Abilities,
     pub classes: Classes,
     pub skills: Skills,
-    pub items: Items,
+    pub inventory: Items,
     pub equipment: ItemSlots,
     pub exhaustion_level: usize,
     pub damage: usize,
@@ -161,7 +161,7 @@ impl Character {
     }
 
     pub fn get_total_weight_carried(&self) -> usize {
-        self.items.get_total_weight() + self.equipment.get_total_weight()
+        self.inventory.get_total_weight() + self.equipment.get_total_weight()
     }
 
     #[must_use]
@@ -179,7 +179,7 @@ impl Character {
     }
 
     pub fn add_item(&mut self, item: Item) {
-        self.items.add_item(item);
+        self.inventory.add_item(item);
     }
 
     #[must_use]
@@ -294,7 +294,7 @@ mod tests {
                     flaws: vec![],
                 },
                 skills: Skills::default(),
-                items: Items::default(),
+                inventory: Items::default(),
                 exhaustion_level: 0,
                 damage: 0,
                 equipment: ItemSlots::default(),
