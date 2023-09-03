@@ -7,11 +7,11 @@ use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
     class::{self, Class, Classes, HPIncreases},
-    item::Items,
+    item::{ArmorClass, Item, Items},
     modifiers::Proficiency,
     race::{self, CreatureType, Language, Race, Size},
     skill::Skills,
-    slot::ItemSlots,
+    slot::{ItemSlots, Slot},
     spell::SpellList,
     view::tui::render_character,
 };
@@ -75,6 +75,32 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         })
         .unwrap(),
     );
+    character.add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")));
+    character.add_equipment_slot("left hand", Slot::new(|_| true));
+    character.add_equipment_slot("cloak", Slot::new(|_| true));
+    character
+        .equip_item(
+            Item::new(
+                "Mithral Plate",
+                65,
+                vec!["armor".into()],
+                Some(ArmorClass::Heavy(18)),
+            ),
+            "armor",
+        )
+        .expect("Make sure you have the right slot.");
+    character
+        .equip_item(
+            Item::new("Shield", 6, vec![], Some(ArmorClass::Heavy(2))),
+            "left hand",
+        )
+        .expect("Do you have a left hand?");
+    character
+        .equip_item(
+            Item::new("Cloak of Protection", 0, vec![], Some(ArmorClass::Heavy(1))),
+            "cloak",
+        )
+        .expect("Did have a cloak slot?");
 
     render_character(f, f.size(), &character);
 }

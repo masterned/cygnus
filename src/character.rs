@@ -91,7 +91,19 @@ impl Character {
 
     #[must_use]
     pub fn get_armor_class(&self) -> usize {
-        23
+        let dex_mod = self.get_ability_modifier(&Ability::Dexterity);
+        self.equipment
+            .get_equipped_items()
+            .iter()
+            .filter_map(|item| item.get_armor_class())
+            .map(|armor_class| match armor_class {
+                crate::item::ArmorClass::Light(ac) => ac as isize + dex_mod,
+                crate::item::ArmorClass::Medium(ac) => {
+                    ac as isize + if dex_mod > 2 { 2 } else { dex_mod }
+                }
+                crate::item::ArmorClass::Heavy(ac) => ac as isize,
+            } as usize)
+            .sum()
     }
 
     #[must_use]
@@ -272,7 +284,7 @@ impl error::Error for Error {}
 
 #[cfg(test)]
 mod tests {
-    use crate::ability::AbilitiesTemplate;
+    use crate::{ability::AbilitiesTemplate, item::ArmorClass};
 
     use super::*;
 
@@ -353,7 +365,7 @@ mod tests {
     #[test]
     fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 46, vec![]));
+        character.add_item(Item::new("test", 46, vec![], None));
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -364,7 +376,7 @@ mod tests {
     #[test]
     fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 91, vec![]));
+        character.add_item(Item::new("test", 91, vec![], None));
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -376,10 +388,18 @@ mod tests {
     fn _should_include_inventory_and_equipment_in_total_carried_weight() {
         let mut character = Character::dummy();
 
-        character.add_item(Item::new("Rapier", 2, vec!["weapon".into()]));
+        character.add_item(Item::new("Rapier", 2, vec!["weapon".into()], None));
 
-        character.add_equipment_slot("armor", Slot::new(|_: &Item| true));
-        let _ = character.equip_item(Item::new("Chain Mail", 55, vec!["armor".into()]), "armor");
+        character.add_equipment_slot("armor", Slot::new(|_| true));
+        let _ = character.equip_item(
+            Item::new(
+                "Chain Mail",
+                55,
+                vec!["armor".into()],
+                Some(ArmorClass::Heavy(16)),
+            ),
+            "armor",
+        );
 
         assert_eq!(character.get_total_weight_carried(), 57);
     }
@@ -387,7 +407,7 @@ mod tests {
     #[test]
     fn _encumbered_characters_should_reduce_their_speed_by_10() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 46, vec![]));
+        character.add_item(Item::new("test", 46, vec![], None));
 
         assert_eq!(character.get_walking_speed(), 20);
     }
@@ -395,7 +415,7 @@ mod tests {
     #[test]
     fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 91, vec![]));
+        character.add_item(Item::new("test", 91, vec![], None));
 
         assert_eq!(character.get_walking_speed(), 10);
     }
@@ -512,5 +532,34 @@ mod tests {
         character.race = shadar_kai;
 
         assert_eq!(character.get_feats(), vec![&spell_sniper, &elven_accuracy]);
+    }
+
+    #[test]
+    fn _should_derive_armor_class_from_equipment_and_con_mod() -> CharacterResult<()> {
+        let mut character = Character::dummy();
+        character.add_equipment_slot("chestplate", Slot::new(|_| true));
+        character.add_equipment_slot("helmet", Slot::new(|_| true));
+        character.equip_item(
+            Item::new(
+                "Breastplate",
+                25,
+                vec!["armor".into()],
+                Some(ArmorClass::Medium(14)),
+            ),
+            "chestplate",
+        )?;
+        character.equip_item(
+            Item::new(
+                "Pickelbonnet",
+                2,
+                vec!["armor".into()],
+                Some(ArmorClass::Heavy(3)),
+            ),
+            "helmet",
+        )?;
+
+        assert_eq!(character.get_armor_class(), 16);
+
+        Ok(())
     }
 }

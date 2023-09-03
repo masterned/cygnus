@@ -106,6 +106,13 @@ impl ItemSlots {
             .map(|item| item.get_weight())
             .sum()
     }
+
+    pub fn get_equipped_items(&self) -> Vec<&Item> {
+        self.0
+            .values()
+            .filter_map(|slot| slot.value.as_ref())
+            .collect()
+    }
 }
 
 #[derive(Debug)]
@@ -143,9 +150,12 @@ mod tests {
     fn _should_equip_if_valid() -> SlotResult<()> {
         let mut vc = Slot::new(|item: &Item| item.has_type("armor"));
 
-        vc.equip(Item::new("one", 1, vec!["armor".into()]))?;
+        vc.equip(Item::new("one", 1, vec!["armor".into()], None))?;
 
-        assert_eq!(vc.value, Some(Item::new("one", 1, vec!["armor".into()])));
+        assert_eq!(
+            vc.value,
+            Some(Item::new("one", 1, vec!["armor".into()], None))
+        );
 
         Ok(())
     }
@@ -153,7 +163,7 @@ mod tests {
     #[test]
     fn _should_return_err_if_equip_not_valid() {
         let mut vc = Slot::new(|item: &Item| item.has_type("armor"));
-        let result = vc.equip(Item::new("not armor", 42, vec![]));
+        let result = vc.equip(Item::new("not armor", 42, vec![], None));
 
         assert!(
             matches!(result, Err(SlotError::Invalid)),
@@ -165,9 +175,9 @@ mod tests {
     fn _should_prevent_equipping_multiple_things_to_same_slot() {
         let mut vc = Slot::new(|_: &Item| true);
 
-        let _ = vc.equip(Item::new("armor 1", 35, vec!["armor".into()]));
+        let _ = vc.equip(Item::new("armor 1", 35, vec!["armor".into()], None));
 
-        let result = vc.equip(Item::new("armor 2", 35, vec![String::from("armor")]));
+        let result = vc.equip(Item::new("armor 2", 35, vec![String::from("armor")], None));
 
         assert!(matches!(result, Err(SlotError::Full)));
     }
@@ -182,9 +192,9 @@ mod tests {
     #[test]
     fn _should_return_stored_thing_on_unequip() -> SlotResult<()> {
         let mut vc = Slot::new(|_: &Item| true);
-        let _ = vc.equip(Item::new("dummy", 0, vec![]));
+        let _ = vc.equip(Item::new("dummy", 0, vec![], None));
 
-        assert_eq!(vc.unequip()?, Item::new("dummy", 0, vec![]));
+        assert_eq!(vc.unequip()?, Item::new("dummy", 0, vec![], None));
 
         Ok(())
     }
@@ -192,7 +202,7 @@ mod tests {
     #[test]
     fn _should_remove_value_from_slot_on_unequip() -> SlotResult<()> {
         let mut vc = Slot::new(|_: &Item| true);
-        vc.value = Some(Item::new("dummy", 0, vec![]));
+        vc.value = Some(Item::new("dummy", 0, vec![], None));
         let _ = vc.unequip()?;
 
         assert_eq!(vc.value, None);
@@ -201,6 +211,8 @@ mod tests {
     }
 
     mod slots {
+        use crate::item::ArmorClass;
+
         use super::*;
 
         #[test]
@@ -209,8 +221,19 @@ mod tests {
             equipment.add_slot("armor", Slot::new(|item| item.has_type("armor")));
             equipment.add_slot("right hand", Slot::new(|item| item.has_type("weapon")));
 
-            equipment.equip(Item::new("Chain Mail", 55, vec!["armor".into()]), "armor")?;
-            equipment.equip(Item::new("Rapier", 2, vec!["weapon".into()]), "right hand")?;
+            equipment.equip(
+                Item::new(
+                    "Chain Mail",
+                    55,
+                    vec!["armor".into()],
+                    Some(ArmorClass::Heavy(16)),
+                ),
+                "armor",
+            )?;
+            equipment.equip(
+                Item::new("Rapier", 2, vec!["weapon".into()], None),
+                "right hand",
+            )?;
 
             Ok(())
         }
@@ -223,25 +246,49 @@ mod tests {
 
             let armor_criteria = |item: &Item| item.has_type("armor");
 
-            equipment.equip(Item::new("Rapier", 2, vec!["weapon".into()]), "right hand")?;
+            equipment.equip(
+                Item::new("Rapier", 2, vec!["weapon".into()], None),
+                "right hand",
+            )?;
             assert!(!equipment.has_item_equipped_matching_criteria(armor_criteria));
 
-            equipment.equip(Item::new("Chain Mail", 55, vec!["armor".into()]), "armor")?;
+            equipment.equip(
+                Item::new(
+                    "Chain Mail",
+                    55,
+                    vec!["armor".into()],
+                    Some(ArmorClass::Heavy(16)),
+                ),
+                "armor",
+            )?;
             assert!(equipment.has_item_equipped_matching_criteria(armor_criteria));
 
             Ok(())
         }
 
         #[test]
-        fn _should_return_the_total_weight_of_equipped_items() {
+        fn _should_return_the_total_weight_of_equipped_items() -> SlotsResult<()> {
             let mut equipment = ItemSlots::default();
             equipment.add_slot("armor", Slot::new(|_: &Item| true));
             equipment.add_slot("right hand", Slot::new(|_: &Item| true));
 
-            let _ = equipment.equip(Item::new("Chain Mail", 55, vec!["armor".into()]), "armor");
-            let _ = equipment.equip(Item::new("Rapier", 2, vec!["weapon".into()]), "right hand");
+            equipment.equip(
+                Item::new(
+                    "Chain Mail",
+                    55,
+                    vec!["armor".into()],
+                    Some(ArmorClass::Heavy(16)),
+                ),
+                "armor",
+            )?;
+            equipment.equip(
+                Item::new("Rapier", 2, vec!["weapon".into()], None),
+                "right hand",
+            )?;
 
             assert_eq!(equipment.get_total_weight(), 57);
+
+            Ok(())
         }
     }
 }

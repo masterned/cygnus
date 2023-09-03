@@ -1,17 +1,31 @@
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ArmorClass {
+    Light(usize),
+    Medium(usize),
+    Heavy(usize),
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Item {
     name: String,
     weight: usize,
     types: Vec<String>,
+    armor_class: Option<ArmorClass>,
 }
 
 impl Item {
     #[must_use]
-    pub fn new(name: impl Into<String>, weight: usize, types: Vec<String>) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        weight: usize,
+        types: Vec<String>,
+        armor_class: Option<ArmorClass>,
+    ) -> Self {
         Item {
             name: name.into(),
             weight,
             types,
+            armor_class,
         }
     }
 
@@ -26,6 +40,10 @@ impl Item {
 
     pub fn has_type(&self, item_type: impl Into<String>) -> bool {
         self.types.contains(&item_type.into())
+    }
+
+    pub fn get_armor_class(&self) -> Option<ArmorClass> {
+        self.armor_class
     }
 }
 
@@ -61,16 +79,19 @@ mod tests {
                 name: String::from("one"),
                 weight: 1,
                 types: vec![],
+                armor_class: None,
             },
             Item {
                 name: String::from("two"),
                 weight: 2,
                 types: vec![],
+                armor_class: None,
             },
             Item {
                 name: String::from("three"),
                 weight: 3,
                 types: vec![],
+                armor_class: None,
             },
         ]);
 
