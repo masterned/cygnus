@@ -3,6 +3,7 @@ use std::{error, fmt};
 use crate::{
     ability::{Abilities, Ability},
     class::{Class, Classes},
+    feat::Feat,
     item::{Item, Items},
     modifiers::{Encumbrance, Proficiency},
     race::{CreatureType, Race, Size},
@@ -237,6 +238,10 @@ impl Character {
     pub fn has_item_equipped_matching_criteria(&self, item_criteria: fn(&Item) -> bool) -> bool {
         self.equipment
             .has_item_equipped_matching_criteria(item_criteria)
+    }
+
+    pub fn get_feats(&self) -> Vec<&Feat> {
+        [self.classes.get_feats(), self.race.get_feats()].concat()
     }
 }
 
@@ -483,5 +488,29 @@ mod tests {
             .skills
             .set_proficiency(Skill::Insight, Some(Proficiency::Proficiency));
         assert_eq!(character.get_passive_insight(), 11);
+    }
+
+    #[test]
+    fn _should_obtain_feats_from_classes_and_race() {
+        let mut character = Character::dummy();
+
+        let spell_sniper = Feat::new(
+            "Spell Sniper",
+            "Doubles casting distance and ignores half cover.",
+        );
+        let mut wizard = Class::wizard();
+        wizard.add_feat(spell_sniper.clone());
+
+        character.add_class(wizard);
+
+        let elven_accuracy = Feat::new(
+            "Elven Accuracy",
+            "When rolling advantage on ranged checks, roll a third die.",
+        );
+        let mut shadar_kai = Race::shadar_kai();
+        shadar_kai.add_feat(elven_accuracy.clone());
+        character.race = shadar_kai;
+
+        assert_eq!(character.get_feats(), vec![&spell_sniper, &elven_accuracy]);
     }
 }

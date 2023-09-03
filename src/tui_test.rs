@@ -71,6 +71,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             ]),
             spell_list: Some(SpellList::default()),
             hp_increases: HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]).unwrap(),
+            feats: vec![],
         })
         .unwrap(),
     );

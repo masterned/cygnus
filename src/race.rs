@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ability::Abilities, modifiers::Resistance};
+use crate::{ability::Abilities, feat::Feat, modifiers::Resistance};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CreatureType {
@@ -71,6 +71,7 @@ pub struct Race {
     damage_resistances: HashMap<DamageType, Resistance>,
     condition_resistances: HashMap<Condition, Resistance>,
     languages: Vec<Language>,
+    feats: Vec<Feat>,
 }
 
 impl Race {
@@ -118,6 +119,14 @@ impl Race {
     pub fn can_speak(&self, language: &Language) -> bool {
         self.languages.contains(language)
     }
+
+    pub fn get_feats(&self) -> Vec<&Feat> {
+        self.feats.iter().collect()
+    }
+
+    pub fn add_feat(&mut self, feat: Feat) {
+        self.feats.push(feat);
+    }
 }
 
 impl From<Template> for Race {
@@ -131,6 +140,7 @@ impl From<Template> for Race {
             damage_resistances: value.damage_resistances,
             condition_resistances: value.condition_resistances,
             languages: value.languages,
+            feats: vec![],
         }
     }
 }
@@ -160,6 +170,7 @@ mod tests {
                 damage_resistances: HashMap::new(),
                 condition_resistances: HashMap::new(),
                 languages: vec![Language::Common],
+                feats: vec![],
             }
         }
 
@@ -181,6 +192,7 @@ mod tests {
                     Resistance::Immune,
                 )]),
                 languages: vec![Language::Common, Language::Undercommon],
+                feats: vec![],
             }
         }
     }

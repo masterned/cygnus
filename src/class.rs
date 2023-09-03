@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error, fmt};
 
-use crate::{ability::Ability, modifiers::Proficiency, spell::SpellList};
+use crate::{ability::Ability, feat::Feat, modifiers::Proficiency, spell::SpellList};
 
 #[derive(Debug, Default)]
 pub struct HPIncreases(Vec<usize>);
@@ -71,6 +71,7 @@ pub struct Template {
     pub saving_throw_proficiencies: HashMap<Ability, Proficiency>,
     pub spell_list: Option<SpellList>,
     pub hp_increases: HPIncreases,
+    pub feats: Vec<Feat>,
 }
 
 #[derive(Debug)]
@@ -80,6 +81,7 @@ pub struct Class {
     saving_throw_proficiencies: HashMap<Ability, Proficiency>,
     spell_list: Option<SpellList>,
     hp_increases: HPIncreases,
+    feats: Vec<Feat>,
 }
 
 impl TryFrom<Template> for Class {
@@ -92,6 +94,7 @@ impl TryFrom<Template> for Class {
             saving_throw_proficiencies: value.saving_throw_proficiencies,
             spell_list: value.spell_list,
             hp_increases: value.hp_increases,
+            feats: value.feats,
         };
         class.set_level(value.level)?;
         Ok(class)
@@ -136,6 +139,14 @@ impl Class {
     pub fn get_hit_points(&self, constitution_modifier: isize) -> usize {
         self.hp_increases.get_hit_points(constitution_modifier)
     }
+
+    pub fn get_feats(&self) -> &[Feat] {
+        &self.feats
+    }
+
+    pub fn add_feat(&mut self, feat: Feat) {
+        self.feats.push(feat);
+    }
 }
 
 #[derive(Debug)]
@@ -173,6 +184,14 @@ impl Classes {
             class.get_hit_points(constitution_modifier) + acc
         })
     }
+
+    pub fn get_feats(&self) -> Vec<&Feat> {
+        self.0
+            .iter()
+            .map(|class| class.get_feats())
+            .flatten()
+            .collect()
+    }
 }
 
 impl fmt::Display for Classes {
@@ -203,6 +222,7 @@ mod tests {
                 ]),
                 spell_list: Some(SpellList::default()),
                 hp_increases: HPIncreases::new(6),
+                feats: vec![],
             }
         }
 
@@ -217,6 +237,7 @@ mod tests {
                 ]),
                 spell_list: Some(SpellList::default()),
                 hp_increases: HPIncreases::new(8),
+                feats: vec![],
             }
         }
     }
@@ -354,6 +375,7 @@ mod tests {
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
             hp_increases: HPIncreases::default(),
+            feats: vec![],
         }]);
         assert_eq!(lvl4.get_proficiency_bonus(), 2);
 
@@ -363,6 +385,7 @@ mod tests {
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
             hp_increases: HPIncreases::default(),
+            feats: vec![],
         }]);
         assert_eq!(lvl5.get_proficiency_bonus(), 3);
 
@@ -372,6 +395,7 @@ mod tests {
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
             hp_increases: HPIncreases::default(),
+            feats: vec![],
         }]);
         assert_eq!(lvl9.get_proficiency_bonus(), 4);
 
@@ -381,6 +405,7 @@ mod tests {
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
             hp_increases: HPIncreases::default(),
+            feats: vec![],
         }]);
         assert_eq!(lvl13.get_proficiency_bonus(), 5);
 
@@ -390,6 +415,7 @@ mod tests {
             saving_throw_proficiencies: HashMap::new(),
             spell_list: None,
             hp_increases: HPIncreases::default(),
+            feats: vec![],
         }]);
         assert_eq!(lvl17.get_proficiency_bonus(), 6);
     }
@@ -509,5 +535,23 @@ mod tests {
         let multiclass = Classes(vec![Class::artificer(), Class::wizard()]);
 
         assert_eq!(multiclass.get_level(), 2);
+    }
+
+    #[test]
+    fn _should_return_feats_of_all_classes() {
+        let sharpshooter = Feat::new(
+            "Sharpshooter",
+            "Double range distance and ignore half cover.",
+        );
+        let mut artificer = Class::artificer();
+        artificer.add_feat(sharpshooter.clone());
+
+        let war_caster = Feat::new("War Caster", "Can cast cantrip as attack of opportunity. Advantate on CON saving throws when concentrating.");
+        let mut wizard = Class::wizard();
+        wizard.add_feat(war_caster.clone());
+
+        let multiclass = Classes(vec![artificer, wizard]);
+
+        assert_eq!(multiclass.get_feats(), vec![&sharpshooter, &war_caster]);
     }
 }
