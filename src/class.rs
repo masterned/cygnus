@@ -186,11 +186,7 @@ impl Classes {
     }
 
     pub fn get_feats(&self) -> Vec<&Feat> {
-        self.0
-            .iter()
-            .map(|class| class.get_feats())
-            .flatten()
-            .collect()
+        self.0.iter().flat_map(|class| class.get_feats()).collect()
     }
 }
 
