@@ -7,9 +7,10 @@ use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
     class::{self, Class, Classes, HPIncreases},
+    feat::Feat,
     item::{self, ArmorClass, Items},
     modifiers::Proficiency,
-    race::{self, CreatureType, Language, Race, Size},
+    race::{self, Condition, DamageType, Language},
     skill::Skills,
     slot::{ItemSlots, Slot},
     spell::SpellList,
@@ -26,6 +27,25 @@ use tui::{
 };
 
 fn ui<B: Backend>(f: &mut Frame<B>) {
+    let race = race::Builder::new()
+        .name("Haskellian")
+        .add_ability(Ability::Intelligence, 2)
+        .add_ability(Ability::Dexterity, 1)
+        .add_damage_resistance(DamageType::Necrotic)
+        .add_condition_immunity(Condition::MagicalSleep)
+        .add_language(Language::Common)
+        .add_language(Language::Undercommon)
+        .add_feat(Feat::new(
+            "Trance",
+            "Short long rests & two proficiency options each long rest.",
+        ))
+        .add_feat(Feat::new(
+            "Explaining a Monad",
+            "Misty Step + damage resistance (Prof mod / day)",
+        ))
+        .build()
+        .expect("You broke your race.");
+
     let mut character = Character {
         name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
         alignment: (Conformity::Lawful, Morality::Neutral),
@@ -36,16 +56,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
             bonds: vec![],
             flaws: vec![],
         },
-        race: Race::from(race::Template {
-            name: "Haskellian".into(),
-            creature_type: CreatureType::Humanoid,
-            size: Size::Medium,
-            walking_speed: 30,
-            abilities: Abilities::default(),
-            damage_resistances: HashMap::new(),
-            condition_resistances: HashMap::new(),
-            languages: vec![Language::Common],
-        }),
+        race,
         abilities: Abilities::from(AbilitiesTemplate {
             strength: Some(10),
             dexterity: Some(16),

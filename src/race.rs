@@ -1,8 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
-use crate::{ability::Abilities, feat::Feat, modifiers::Resistance};
+use crate::{
+    ability::{Abilities, Ability},
+    feat::Feat,
+    modifiers::Resistance,
+};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub enum CreatureType {
     Aberration,
     Beast,
@@ -13,6 +17,7 @@ pub enum CreatureType {
     Fey,
     Fiend,
     Giant,
+    #[default]
     Humanoid,
     Monstrosity,
     Ooze,
@@ -35,10 +40,11 @@ pub enum Condition {
     Unconscience,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Size {
     Tiny,
     Small,
+    #[default]
     Medium,
     Large,
     Huge,
@@ -49,6 +55,137 @@ pub enum Size {
 pub enum Language {
     Common,
     Undercommon,
+}
+
+#[derive(Debug, Default)]
+pub struct Builder {
+    name: Option<String>,
+    creature_type: Option<CreatureType>,
+    size: Option<Size>,
+    walking_speed: Option<usize>,
+    abilities: Abilities,
+    damage_resistances: HashMap<DamageType, Resistance>,
+    condition_resistance: HashMap<Condition, Resistance>,
+    languages: Vec<Language>,
+    feats: Vec<Feat>,
+}
+
+impl Builder {
+    pub fn new() -> Self {
+        Builder::default()
+    }
+
+    pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
+        self.name = Some(name.into());
+
+        self
+    }
+
+    pub fn creature_type(&mut self, creature_type: CreatureType) -> &mut Self {
+        self.creature_type = Some(creature_type);
+
+        self
+    }
+
+    pub fn size(&mut self, size: Size) -> &mut Self {
+        self.size = Some(size);
+
+        self
+    }
+
+    pub fn walking_speed(&mut self, walking_speed: usize) -> &mut Self {
+        self.walking_speed = Some(walking_speed);
+
+        self
+    }
+
+    pub fn add_ability(&mut self, ability: Ability, score: usize) -> &mut Self {
+        self.abilities.set_score(ability, Some(score));
+
+        self
+    }
+
+    pub fn add_damage_resistance(&mut self, damage_type: DamageType) -> &mut Self {
+        self.damage_resistances
+            .insert(damage_type, Resistance::Resistant);
+
+        self
+    }
+
+    pub fn add_damage_immunity(&mut self, damage_type: DamageType) -> &mut Self {
+        self.damage_resistances
+            .insert(damage_type, Resistance::Immune);
+
+        self
+    }
+
+    pub fn add_condition_resistance(&mut self, condition: Condition) -> &mut Self {
+        self.condition_resistance
+            .insert(condition, Resistance::Resistant);
+
+        self
+    }
+
+    pub fn add_condition_immunity(&mut self, condition: Condition) -> &mut Self {
+        self.condition_resistance
+            .insert(condition, Resistance::Immune);
+
+        self
+    }
+
+    pub fn add_language(&mut self, language: Language) -> &mut Self {
+        self.languages.push(language);
+
+        self
+    }
+
+    pub fn add_feat(&mut self, feat: Feat) -> &mut Self {
+        self.feats.push(feat);
+
+        self
+    }
+
+    pub fn build(&self) -> Result<Race, RaceConstructionError> {
+        let name = self
+            .name
+            .clone()
+            .ok_or(RaceConstructionError::MissingName)?;
+        let creature_type = self.creature_type.unwrap_or_default();
+        let size = self.size.unwrap_or_default();
+        let walking_speed = self.walking_speed.unwrap_or(30);
+        let abilities = self.abilities;
+        let damage_resistances = self.damage_resistances.clone();
+        let condition_resistances = self.condition_resistance.clone();
+        let languages = self.languages.clone();
+        let feats = self.feats.clone();
+
+        Ok(Race {
+            name,
+            creature_type,
+            size,
+            walking_speed,
+            abilities,
+            damage_resistances,
+            condition_resistances,
+            languages,
+            feats,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub enum RaceConstructionError {
+    MissingName,
+}
+
+impl fmt::Display for RaceConstructionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            RaceConstructionError::MissingName => "Cannot construct race without a name.",
+        };
+
+        write!(f, "{result}")
+    }
 }
 
 pub struct Template {
