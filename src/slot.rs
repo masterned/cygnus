@@ -144,18 +144,22 @@ pub type SlotsResult<T> = Result<T, SlotsError>;
 
 #[cfg(test)]
 mod tests {
+    use crate::item;
+
     use super::*;
 
     #[test]
     fn _should_equip_if_valid() -> SlotResult<()> {
         let mut vc = Slot::new(|item: &Item| item.has_type("armor"));
 
-        vc.equip(Item::new("one", 1, vec!["armor".into()], None))?;
+        let item = item::Builder::new()
+            .set_name("one")
+            .add_type("armor")
+            .build()
+            .unwrap();
+        vc.equip(item.clone())?;
 
-        assert_eq!(
-            vc.value,
-            Some(Item::new("one", 1, vec!["armor".into()], None))
-        );
+        assert_eq!(vc.value, Some(item));
 
         Ok(())
     }
@@ -163,7 +167,9 @@ mod tests {
     #[test]
     fn _should_return_err_if_equip_not_valid() {
         let mut vc = Slot::new(|item: &Item| item.has_type("armor"));
-        let result = vc.equip(Item::new("not armor", 42, vec![], None));
+
+        let not_armor = item::Builder::new().set_name("not armor").build().unwrap();
+        let result = vc.equip(not_armor);
 
         assert!(
             matches!(result, Err(SlotError::Invalid)),
@@ -175,9 +181,11 @@ mod tests {
     fn _should_prevent_equipping_multiple_things_to_same_slot() {
         let mut vc = Slot::new(|_: &Item| true);
 
-        let _ = vc.equip(Item::new("armor 1", 35, vec!["armor".into()], None));
+        let item1 = item::Builder::new().set_name("item 1").build().unwrap();
+        let _ = vc.equip(item1.clone());
 
-        let result = vc.equip(Item::new("armor 2", 35, vec![String::from("armor")], None));
+        let item2 = item::Builder::new().set_name("item 2").build().unwrap();
+        let result = vc.equip(item2);
 
         assert!(matches!(result, Err(SlotError::Full)));
     }
@@ -192,9 +200,11 @@ mod tests {
     #[test]
     fn _should_return_stored_thing_on_unequip() -> SlotResult<()> {
         let mut vc = Slot::new(|_: &Item| true);
-        let _ = vc.equip(Item::new("dummy", 0, vec![], None));
 
-        assert_eq!(vc.unequip()?, Item::new("dummy", 0, vec![], None));
+        let item = item::Builder::new().set_name("dummy").build().unwrap();
+        let _ = vc.equip(item.clone());
+
+        assert_eq!(vc.unequip()?, item);
 
         Ok(())
     }
@@ -202,7 +212,9 @@ mod tests {
     #[test]
     fn _should_remove_value_from_slot_on_unequip() -> SlotResult<()> {
         let mut vc = Slot::new(|_: &Item| true);
-        vc.value = Some(Item::new("dummy", 0, vec![], None));
+
+        let item = item::Builder::new().set_name("dummy").build().unwrap();
+        vc.value = Some(item);
         let _ = vc.unequip()?;
 
         assert_eq!(vc.value, None);
@@ -221,19 +233,22 @@ mod tests {
             equipment.add_slot("armor", Slot::new(|item| item.has_type("armor")));
             equipment.add_slot("right hand", Slot::new(|item| item.has_type("weapon")));
 
-            equipment.equip(
-                Item::new(
-                    "Chain Mail",
-                    55,
-                    vec!["armor".into()],
-                    Some(ArmorClass::Heavy(16)),
-                ),
-                "armor",
-            )?;
-            equipment.equip(
-                Item::new("Rapier", 2, vec!["weapon".into()], None),
-                "right hand",
-            )?;
+            let chain_mail = item::Builder::new()
+                .set_name("Chain Mail")
+                .set_weight(55)
+                .add_type("armor")
+                .set_armor_class(ArmorClass::Heavy(16))
+                .build()
+                .unwrap();
+            equipment.equip(chain_mail, "armor")?;
+
+            let rapier = item::Builder::new()
+                .set_name("Rapier")
+                .set_weight(2)
+                .add_type("weapon")
+                .build()
+                .unwrap();
+            equipment.equip(rapier, "right hand")?;
 
             Ok(())
         }
@@ -246,21 +261,23 @@ mod tests {
 
             let armor_criteria = |item: &Item| item.has_type("armor");
 
-            equipment.equip(
-                Item::new("Rapier", 2, vec!["weapon".into()], None),
-                "right hand",
-            )?;
+            let rapier = item::Builder::new()
+                .set_name("Rapier")
+                .set_weight(2)
+                .add_type("weapon")
+                .build()
+                .unwrap();
+            equipment.equip(rapier, "right hand")?;
             assert!(!equipment.has_item_equipped_matching_criteria(armor_criteria));
 
-            equipment.equip(
-                Item::new(
-                    "Chain Mail",
-                    55,
-                    vec!["armor".into()],
-                    Some(ArmorClass::Heavy(16)),
-                ),
-                "armor",
-            )?;
+            let chain_mail = item::Builder::new()
+                .set_name("Chain Mail")
+                .set_weight(55)
+                .add_type("armor")
+                .set_armor_class(ArmorClass::Heavy(16))
+                .build()
+                .unwrap();
+            equipment.equip(chain_mail, "armor")?;
             assert!(equipment.has_item_equipped_matching_criteria(armor_criteria));
 
             Ok(())
@@ -272,19 +289,22 @@ mod tests {
             equipment.add_slot("armor", Slot::new(|_: &Item| true));
             equipment.add_slot("right hand", Slot::new(|_: &Item| true));
 
-            equipment.equip(
-                Item::new(
-                    "Chain Mail",
-                    55,
-                    vec!["armor".into()],
-                    Some(ArmorClass::Heavy(16)),
-                ),
-                "armor",
-            )?;
-            equipment.equip(
-                Item::new("Rapier", 2, vec!["weapon".into()], None),
-                "right hand",
-            )?;
+            let chain_mail = item::Builder::new()
+                .set_name("Chain Mail")
+                .set_weight(55)
+                .add_type("armor")
+                .set_armor_class(ArmorClass::Heavy(16))
+                .build()
+                .unwrap();
+            equipment.equip(chain_mail, "armor")?;
+
+            let rapier = item::Builder::new()
+                .set_name("Rapier")
+                .set_weight(2)
+                .add_type("weapon")
+                .build()
+                .unwrap();
+            equipment.equip(rapier, "right hand")?;
 
             assert_eq!(equipment.get_total_weight(), 57);
 

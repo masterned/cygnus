@@ -284,7 +284,10 @@ impl error::Error for Error {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{ability::AbilitiesTemplate, item::ArmorClass};
+    use crate::{
+        ability::AbilitiesTemplate,
+        item::{self, ArmorClass},
+    };
 
     use super::*;
 
@@ -365,7 +368,13 @@ mod tests {
     #[test]
     fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 46, vec![], None));
+
+        let item = item::Builder::new()
+            .set_name("test")
+            .set_weight(46)
+            .build()
+            .unwrap();
+        character.add_item(item);
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -376,7 +385,13 @@ mod tests {
     #[test]
     fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 91, vec![], None));
+
+        let item = item::Builder::new()
+            .set_name("test")
+            .set_weight(91)
+            .build()
+            .unwrap();
+        character.add_item(item);
 
         assert_eq!(
             character.get_variant_encumbrance(),
@@ -388,18 +403,23 @@ mod tests {
     fn _should_include_inventory_and_equipment_in_total_carried_weight() {
         let mut character = Character::dummy();
 
-        character.add_item(Item::new("Rapier", 2, vec!["weapon".into()], None));
+        let rapier = item::Builder::new()
+            .set_name("Rapier")
+            .set_weight(2)
+            .add_type("weapon")
+            .build()
+            .unwrap();
+        character.add_item(rapier);
 
         character.add_equipment_slot("armor", Slot::new(|_| true));
-        let _ = character.equip_item(
-            Item::new(
-                "Chain Mail",
-                55,
-                vec!["armor".into()],
-                Some(ArmorClass::Heavy(16)),
-            ),
-            "armor",
-        );
+        let chain_mail = item::Builder::new()
+            .set_name("Chain Mail")
+            .set_weight(55)
+            .add_type("armor")
+            .set_armor_class(ArmorClass::Heavy(16))
+            .build()
+            .unwrap();
+        let _ = character.equip_item(chain_mail, "armor");
 
         assert_eq!(character.get_total_weight_carried(), 57);
     }
@@ -407,7 +427,13 @@ mod tests {
     #[test]
     fn _encumbered_characters_should_reduce_their_speed_by_10() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 46, vec![], None));
+
+        let item = item::Builder::new()
+            .set_name("test")
+            .set_weight(46)
+            .build()
+            .unwrap();
+        character.add_item(item);
 
         assert_eq!(character.get_walking_speed(), 20);
     }
@@ -415,7 +441,13 @@ mod tests {
     #[test]
     fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() {
         let mut character = Character::dummy();
-        character.add_item(Item::new("test", 91, vec![], None));
+
+        let item = item::Builder::new()
+            .set_name("test")
+            .set_weight(91)
+            .build()
+            .unwrap();
+        character.add_item(item);
 
         assert_eq!(character.get_walking_speed(), 10);
     }
@@ -539,24 +571,24 @@ mod tests {
         let mut character = Character::dummy();
         character.add_equipment_slot("chestplate", Slot::new(|_| true));
         character.add_equipment_slot("helmet", Slot::new(|_| true));
-        character.equip_item(
-            Item::new(
-                "Breastplate",
-                25,
-                vec!["armor".into()],
-                Some(ArmorClass::Medium(14)),
-            ),
-            "chestplate",
-        )?;
-        character.equip_item(
-            Item::new(
-                "Pickelbonnet",
-                2,
-                vec!["armor".into()],
-                Some(ArmorClass::Heavy(3)),
-            ),
-            "helmet",
-        )?;
+
+        let breastplate = item::Builder::new()
+            .set_name("Breastplate")
+            .set_weight(25)
+            .add_type("armor")
+            .set_armor_class(ArmorClass::Medium(14))
+            .build()
+            .unwrap();
+        character.equip_item(breastplate, "chestplate")?;
+
+        let pickelbonnet = item::Builder::new()
+            .set_name("Pickelbonnet")
+            .set_weight(2)
+            .add_type("armor")
+            .set_armor_class(ArmorClass::Heavy(3))
+            .build()
+            .unwrap();
+        character.equip_item(pickelbonnet, "helmet")?;
 
         assert_eq!(character.get_armor_class(), 16);
 

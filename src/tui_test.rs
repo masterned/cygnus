@@ -7,7 +7,7 @@ use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
     class::{self, Class, Classes, HPIncreases},
-    item::{ArmorClass, Item, Items},
+    item::{self, ArmorClass, Items},
     modifiers::Proficiency,
     race::{self, CreatureType, Language, Race, Size},
     skill::Skills,
@@ -78,29 +78,36 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
     character.add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")));
     character.add_equipment_slot("left hand", Slot::new(|_| true));
     character.add_equipment_slot("cloak", Slot::new(|_| true));
+
+    let mithral_plate = item::Builder::new()
+        .set_name("Mithral Plate")
+        .set_weight(65)
+        .add_type("armor")
+        .set_armor_class(ArmorClass::Heavy(18))
+        .build()
+        .expect("There shouldn't be an error here.");
     character
-        .equip_item(
-            Item::new(
-                "Mithral Plate",
-                65,
-                vec!["armor".into()],
-                Some(ArmorClass::Heavy(18)),
-            ),
-            "armor",
-        )
+        .equip_item(mithral_plate, "armor")
         .expect("Make sure you have the right slot.");
+
+    let shield = item::Builder::new()
+        .set_name("Shield")
+        .set_weight(6)
+        .set_armor_class(ArmorClass::Heavy(2))
+        .build()
+        .expect("The shield shouldn't error out either.");
     character
-        .equip_item(
-            Item::new("Shield", 6, vec![], Some(ArmorClass::Heavy(2))),
-            "left hand",
-        )
+        .equip_item(shield, "left hand")
         .expect("Do you have a left hand?");
+
+    let cloak_of_protection = item::Builder::new()
+        .set_name("Cloak of Protection")
+        .set_armor_class(ArmorClass::Heavy(1))
+        .build()
+        .expect("Cloak shouldn't mess up.");
     character
-        .equip_item(
-            Item::new("Cloak of Protection", 0, vec![], Some(ArmorClass::Heavy(1))),
-            "cloak",
-        )
-        .expect("Did have a cloak slot?");
+        .equip_item(cloak_of_protection, "cloak")
+        .expect("Do you have a cloak slot?");
 
     render_character(f, f.size(), &character);
 }
