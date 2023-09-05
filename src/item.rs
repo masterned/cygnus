@@ -104,7 +104,7 @@ impl Item {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Items(Vec<Item>);
 
 impl Items {

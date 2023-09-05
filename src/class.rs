@@ -183,7 +183,7 @@ pub struct Template {
     pub feats: Vec<Feat>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Class {
     name: String,
     level: usize,
@@ -263,7 +263,7 @@ pub enum TryFromError {
     LevelOutOfBounds,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Classes(Vec<Class>);
 
 impl Classes {

@@ -41,25 +41,230 @@ pub struct Personality {
     pub flaws: Vec<String>,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct Builder {
+    name: Option<String>,
+    alignment: Option<Alignment>,
+    gender: Option<Gender>,
+    personality: Option<Personality>,
+    race: Option<Race>,
+    ability_scores: Option<Abilities>,
+    classes: Option<Classes>,
+    skill_proficiencies: Option<Skills>,
+    inventory: Option<Items>,
+    equipment: Option<ItemSlots>,
+}
+
+impl Builder {
+    pub fn new() -> Self {
+        Builder::default()
+    }
+
+    pub fn name(mut self, name: impl Into<String>) -> Result<Self, ConstructionError> {
+        let name: String = name.into();
+
+        if name.is_empty() {
+            return Err(ConstructionError::MissingField("name".into()));
+        }
+
+        let _ = self.name.insert(name);
+
+        Ok(self)
+    }
+
+    pub fn alignment(
+        mut self,
+        conformity: Conformity,
+        morality: Morality,
+    ) -> Result<Self, ConstructionError> {
+        let _ = self.alignment.insert((conformity, morality));
+
+        Ok(self)
+    }
+
+    pub fn gender(mut self, gender: Gender) -> Result<Self, ConstructionError> {
+        let _ = self.gender.insert(gender);
+
+        Ok(self)
+    }
+
+    pub fn personality(mut self, personality: Personality) -> Result<Self, ConstructionError> {
+        let _ = self.personality.insert(personality);
+
+        Ok(self)
+    }
+
+    pub fn race(mut self, race: Race) -> Result<Self, ConstructionError> {
+        let _ = self.race.insert(race);
+
+        Ok(self)
+    }
+
+    pub fn ability_scores(mut self, ability_scores: Abilities) -> Result<Self, ConstructionError> {
+        let _ = self.ability_scores.insert(ability_scores);
+
+        Ok(self)
+    }
+
+    pub fn add_class(mut self, class: Class) -> Result<Self, ConstructionError> {
+        let classes = self.classes.get_or_insert_with(Default::default);
+
+        classes.add_class(class);
+
+        Ok(self)
+    }
+
+    pub fn add_skill_proficiency(mut self, skill: Skill) -> Result<Self, ConstructionError> {
+        let skills = self
+            .skill_proficiencies
+            .get_or_insert_with(Default::default);
+
+        skills.set_proficiency(skill, Some(Proficiency::Proficiency));
+
+        Ok(self)
+    }
+
+    pub fn add_skill_expertise(mut self, skill: Skill) -> Result<Self, ConstructionError> {
+        let skills = self
+            .skill_proficiencies
+            .get_or_insert_with(Default::default);
+
+        skills.set_proficiency(skill, Some(Proficiency::Expertise));
+
+        Ok(self)
+    }
+
+    pub fn inventory(mut self, inventory: Items) -> Result<Self, ConstructionError> {
+        let _ = self.inventory.insert(inventory);
+
+        Ok(self)
+    }
+
+    pub fn add_item_to_inventory(mut self, item: Item) -> Result<Self, ConstructionError> {
+        let inventory = self.inventory.get_or_insert_with(Default::default);
+
+        inventory.add_item(item);
+
+        Ok(self)
+    }
+
+    pub fn equipment(mut self, equipment: ItemSlots) -> Result<Self, ConstructionError> {
+        let _ = self.equipment.insert(equipment);
+
+        Ok(self)
+    }
+
+    pub fn add_equipment_slot(
+        mut self,
+        slot_name: impl Into<String>,
+        slot: Slot<Item, fn(&Item) -> bool>,
+    ) -> Result<Self, ConstructionError> {
+        let equipment = self.equipment.get_or_insert_with(Default::default);
+
+        equipment.add_slot(slot_name, slot);
+
+        Ok(self)
+    }
+
+    pub fn build(self) -> Result<Character, ConstructionError> {
+        let name = self
+            .name
+            .ok_or(ConstructionError::MissingField("name".into()))?;
+
+        let alignment = self
+            .alignment
+            .ok_or(ConstructionError::MissingField("alignment".into()))?;
+
+        let personality = self.personality.unwrap_or_default();
+
+        let race = self
+            .race
+            .ok_or(ConstructionError::MissingField("race".into()))?;
+
+        let ability_scores = self
+            .ability_scores
+            .ok_or(ConstructionError::MissingField("ability scores".into()))?;
+
+        let classes = self
+            .classes
+            .ok_or(ConstructionError::MissingField("class(es)".into()))?;
+
+        let skill_proficiencies = self.skill_proficiencies.unwrap_or_default();
+
+        let inventory = self.inventory.unwrap_or_default();
+
+        let equipment = self.equipment.unwrap_or_default();
+
+        Ok(Character {
+            name,
+            alignment,
+            gender: self.gender,
+            personality,
+            race,
+            ability_scores,
+            classes,
+            skill_proficiencies,
+            inventory,
+            equipment,
+            exhaustion_level: 0,
+            damage: 0,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub enum ConstructionError {
+    MissingField(String),
+}
+
+impl fmt::Display for ConstructionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            ConstructionError::MissingField(field_name) => {
+                format!("Unable to create Character without {field_name}.")
+            }
+        };
+
+        write!(f, "{result}")
+    }
+}
+
+impl error::Error for ConstructionError {}
+
 pub struct Character {
-    pub name: String,
-    pub alignment: Alignment,
-    pub gender: Option<Gender>,
-    pub personality: Personality,
-    pub race: Race,
-    pub abilities: Abilities,
-    pub classes: Classes,
-    pub skills: Skills,
-    pub inventory: Items,
-    pub equipment: ItemSlots,
-    pub exhaustion_level: usize,
-    pub damage: usize,
+    name: String,
+    alignment: Alignment,
+    gender: Option<Gender>,
+    personality: Personality,
+    race: Race,
+    ability_scores: Abilities,
+    classes: Classes,
+    skill_proficiencies: Skills,
+    inventory: Items,
+    equipment: ItemSlots,
+    exhaustion_level: usize,
+    damage: usize,
 }
 
 impl Character {
     #[must_use]
     pub fn get_name(&self) -> &str {
         &self.name
+    }
+
+    #[must_use]
+    pub fn get_alignment(&self) -> Alignment {
+        self.alignment
+    }
+
+    #[must_use]
+    pub fn get_gender(&self) -> Option<Gender> {
+        self.gender
+    }
+
+    #[must_use]
+    pub fn get_personality(&self) -> &Personality {
+        &self.personality
     }
 
     #[must_use]
@@ -85,9 +290,7 @@ impl Character {
 
     #[must_use]
     pub fn get_initiative(&self) -> isize {
-        self.abilities
-            .get_modifier(&Ability::Dexterity)
-            .unwrap_or(0)
+        self.get_ability_modifier(&Ability::Dexterity)
     }
 
     #[must_use]
@@ -141,8 +344,8 @@ impl Character {
         self.get_abilities().get_score(ability).unwrap_or(0)
     }
 
-    fn get_abilities(&self) -> Abilities {
-        self.abilities + *self.race.get_abilities()
+    pub fn get_abilities(&self) -> Abilities {
+        self.ability_scores + *self.race.get_abilities()
     }
 
     #[must_use]
@@ -208,7 +411,7 @@ impl Character {
     #[must_use]
     pub fn get_skill_modifier(&self, skill: &Skill) -> isize {
         self.get_ability_modifier(&skill.get_ability())
-            + (match self.skills.get_proficiency(skill) {
+            + (match self.skill_proficiencies.get_proficiency(skill) {
                 Some(Proficiency::Proficiency) => self.get_proficiency_bonus(),
                 Some(Proficiency::Expertise) => self.get_proficiency_bonus() * 2,
                 None => 0,
@@ -298,7 +501,7 @@ mod tests {
                 name: "Dummy".into(),
                 alignment: (Conformity::Neutral, Morality::Neutral),
                 gender: None,
-                abilities: Abilities::from(AbilitiesTemplate {
+                ability_scores: Abilities::from(AbilitiesTemplate {
                     strength: Some(8),
                     dexterity: Some(8),
                     constitution: Some(8),
@@ -314,7 +517,7 @@ mod tests {
                     bonds: vec![],
                     flaws: vec![],
                 },
-                skills: Skills::default(),
+                skill_proficiencies: Skills::default(),
                 inventory: Items::default(),
                 exhaustion_level: 0,
                 damage: 0,
@@ -487,7 +690,7 @@ mod tests {
         let mut character = Character::dummy();
         character.add_class(Class::wizard());
         character
-            .skills
+            .skill_proficiencies
             .set_proficiency(Skill::Arcana, Some(Proficiency::Proficiency));
 
         assert_eq!(character.get_skill_modifier(&Skill::Arcana), 1);
@@ -498,7 +701,7 @@ mod tests {
         let mut character = Character::dummy();
         character.add_class(Class::wizard());
         character
-            .skills
+            .skill_proficiencies
             .set_proficiency(Skill::Arcana, Some(Proficiency::Expertise));
 
         assert_eq!(character.get_skill_modifier(&Skill::Arcana), 3);
@@ -512,7 +715,7 @@ mod tests {
         assert_eq!(character.get_passive_perception(), 9);
 
         character
-            .skills
+            .skill_proficiencies
             .set_proficiency(Skill::Perception, Some(Proficiency::Proficiency));
         assert_eq!(character.get_passive_perception(), 11);
     }
@@ -525,7 +728,7 @@ mod tests {
         assert_eq!(character.get_passive_investigation(), 9);
 
         character
-            .skills
+            .skill_proficiencies
             .set_proficiency(Skill::Investigation, Some(Proficiency::Proficiency));
         assert_eq!(character.get_passive_investigation(), 11);
     }
@@ -538,7 +741,7 @@ mod tests {
         assert_eq!(character.get_passive_insight(), 9);
 
         character
-            .skills
+            .skill_proficiencies
             .set_proficiency(Skill::Insight, Some(Proficiency::Proficiency));
         assert_eq!(character.get_passive_insight(), 11);
     }

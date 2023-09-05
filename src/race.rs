@@ -199,6 +199,7 @@ pub struct Template {
     pub languages: Vec<Language>,
 }
 
+#[derive(Clone, Debug)]
 pub struct Race {
     name: String,
     creature_type: CreatureType,

@@ -5,13 +5,12 @@ use crossterm::{
 };
 use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
-    character::{Character, Conformity, Gender, Morality, Personality},
-    class::{self, Classes, HPIncreases},
+    character::{self, Conformity, Gender, Morality},
+    class::{self, HPIncreases},
     feat::Feat,
-    item::{self, ArmorClass, Items},
+    item::{self, ArmorClass},
     race::{self, Condition, DamageType, Language},
-    skill::Skills,
-    slot::{ItemSlots, Slot},
+    slot::Slot,
     spell::SpellList,
     view::tui::render_character,
 };
@@ -58,31 +57,28 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         .and_then(|c| c.build())
         .unwrap_or_else(|e| panic!("Unable to build class: {e}"));
 
-    let mut character = Character {
-        name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
-        alignment: (Conformity::Lawful, Morality::Neutral),
-        gender: Some(Gender::Male),
-        personality: Personality::default(),
-        race,
-        abilities: Abilities::from(AbilitiesTemplate {
-            strength: Some(10),
-            dexterity: Some(16),
-            constitution: Some(19),
-            intelligence: Some(20),
-            wisdom: Some(10),
-            charisma: Some(10),
-        }),
-        classes: Classes::default(),
-        skills: Skills::default(),
-        inventory: Items::default(),
-        exhaustion_level: 0,
-        damage: 0,
-        equipment: ItemSlots::default(),
-    };
-    character.add_class(artificer);
-    character.add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")));
-    character.add_equipment_slot("left hand", Slot::new(|_| true));
-    character.add_equipment_slot("cloak", Slot::new(|_| true));
+    let mut character = character::Builder::new()
+        .name("𝛴𝜄𝛾𝜈𝜐𝜍")
+        .and_then(|c| c.alignment(Conformity::Lawful, Morality::Neutral))
+        .and_then(|c| c.gender(Gender::Male))
+        .and_then(|c| c.race(race))
+        .and_then(|c| {
+            c.ability_scores(Abilities::from(AbilitiesTemplate {
+                strength: Some(10),
+                dexterity: Some(15),
+                constitution: Some(10),
+                intelligence: Some(15),
+                wisdom: Some(10),
+                charisma: Some(10),
+            }))
+        })
+        .and_then(|c| c.add_class(artificer))
+        .and_then(|c| c.add_equipment_slot("armor", Slot::new(|item| item.has_type("armor"))))
+        .and_then(|c| c.add_equipment_slot("left hand", Slot::new(|_| true)))
+        .and_then(|c| c.add_equipment_slot("cloak", Slot::new(|_| true)))
+        .and_then(|c| c.add_equipment_slot("armor", Slot::new(|item| item.has_type("armor"))))
+        .and_then(|c| c.build())
+        .unwrap_or_else(|e| panic!("Unable to build character: {e}"));
 
     let mithral_plate = item::Builder::new()
         .set_name("Mithral Plate")

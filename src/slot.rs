@@ -2,7 +2,7 @@ use std::{collections::HashMap, error, fmt};
 
 use crate::item::Item;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Slot<T, F>
 where
     F: Fn(&T) -> bool,
@@ -66,7 +66,7 @@ pub type SlotResult<T> = Result<T, SlotError>;
 
 type ItemSlot = Slot<Item, fn(&Item) -> bool>;
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct ItemSlots(HashMap<String, ItemSlot>);
 
 impl ItemSlots {

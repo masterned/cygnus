@@ -47,6 +47,7 @@ impl Skill {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Skills(HashMap<Skill, Option<Proficiency>>);
 
 impl Skills {

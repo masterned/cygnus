@@ -27,7 +27,7 @@ pub fn render_character<B: Backend>(frame: &mut Frame<B>, area: Rect, character:
         .split(area);
 
     render_header(frame, layout[1], character);
-    render_abilities(frame, layout[2], &character.abilities);
+    render_abilities(frame, layout[2], &character.get_abilities());
 }
 
 fn render_header<B: Backend>(frame: &mut Frame<B>, area: Rect, character: &Character) {
