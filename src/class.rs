@@ -2,7 +2,7 @@ use std::{collections::HashMap, error, fmt};
 
 use crate::{ability::Ability, feat::Feat, modifiers::Proficiency, spell::SpellList};
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct HPIncreases(Vec<usize>);
 
 impl HPIncreases {
@@ -64,6 +64,115 @@ impl fmt::Display for HPIncreaseConstructionError {
 }
 
 impl error::Error for HPIncreaseConstructionError {}
+
+#[derive(Clone, Debug, Default)]
+pub struct Builder {
+    name: Option<String>,
+    level: Option<usize>,
+    saving_throw_proficiencies: HashMap<Ability, Proficiency>,
+    spell_list: Option<SpellList>,
+    hp_increases: Option<HPIncreases>,
+    feats: Vec<Feat>,
+}
+
+impl Builder {
+    pub fn new() -> Self {
+        Builder::default()
+    }
+
+    pub fn name(mut self, name: impl Into<String>) -> Result<Self, ClassConstructionError> {
+        let name: String = name.into();
+
+        if name.is_empty() {
+            return Err(ClassConstructionError::MissingName);
+        }
+
+        let _ = self.name.insert(name);
+
+        Ok(self)
+    }
+
+    pub fn level(mut self, level: usize) -> Result<Self, ClassConstructionError> {
+        if level > 20 {
+            return Err(ClassConstructionError::LevelOutOfBounds);
+        }
+
+        let _ = self.level.insert(level);
+
+        Ok(self)
+    }
+
+    pub fn add_saving_throw_proficiency(
+        mut self,
+        ability: Ability,
+    ) -> Result<Self, ClassConstructionError> {
+        self.saving_throw_proficiencies
+            .insert(ability, Proficiency::Proficiency);
+
+        Ok(self)
+    }
+
+    pub fn spell_list(mut self, spell_list: SpellList) -> Result<Self, ClassConstructionError> {
+        self.spell_list = Some(spell_list);
+
+        Ok(self)
+    }
+
+    pub fn hp_increases(
+        mut self,
+        hp_increases: HPIncreases,
+    ) -> Result<Self, ClassConstructionError> {
+        self.hp_increases = Some(hp_increases);
+
+        Ok(self)
+    }
+
+    pub fn add_feat(mut self, feat: Feat) -> Result<Self, ClassConstructionError> {
+        self.feats.push(feat);
+
+        Ok(self)
+    }
+
+    pub fn build(self) -> Result<Class, ClassConstructionError> {
+        let name = self.name.ok_or(ClassConstructionError::MissingName)?;
+
+        let level = self.level.ok_or(ClassConstructionError::LevelOutOfBounds)?;
+
+        let saving_throw_proficiencies = self.saving_throw_proficiencies;
+
+        let spell_list = self.spell_list;
+
+        let hp_increases = self.hp_increases.unwrap_or_default();
+
+        let feats = self.feats;
+
+        Ok(Class {
+            name,
+            level,
+            saving_throw_proficiencies,
+            spell_list,
+            hp_increases,
+            feats,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub enum ClassConstructionError {
+    MissingName,
+    LevelOutOfBounds,
+}
+
+impl fmt::Display for ClassConstructionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            ClassConstructionError::MissingName => "Cannot create a Class without a name.",
+            ClassConstructionError::LevelOutOfBounds => "Level must be between 1 and 20.",
+        };
+
+        write!(f, "{result}")
+    }
+}
 
 pub struct Template {
     pub name: String,

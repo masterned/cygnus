@@ -6,10 +6,9 @@ use crossterm::{
 use cygnus::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{Character, Conformity, Gender, Morality, Personality},
-    class::{self, Class, Classes, HPIncreases},
+    class::{self, Classes, HPIncreases},
     feat::Feat,
     item::{self, ArmorClass, Items},
-    modifiers::Proficiency,
     race::{self, Condition, DamageType, Language},
     skill::Skills,
     slot::{ItemSlots, Slot},
@@ -17,7 +16,6 @@ use cygnus::{
     view::tui::render_character,
 };
 use std::{
-    collections::HashMap,
     io,
     time::{Duration, Instant},
 };
@@ -46,6 +44,20 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         .build()
         .expect("You broke your race.");
 
+    let spell_list = SpellList::default();
+
+    let hp_increases = HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])
+        .unwrap_or_else(|e| panic!("Unable to create HP Increases: {e}"));
+
+    let artificer = class::Builder::new()
+        .name("Artificer")
+        .and_then(|c| c.level(12))
+        .and_then(|c| c.add_saving_throw_proficiency(Ability::Constitution))
+        .and_then(|c| c.spell_list(spell_list))
+        .and_then(|c| c.hp_increases(hp_increases))
+        .and_then(|c| c.build())
+        .unwrap_or_else(|e| panic!("Unable to build class: {e}"));
+
     let mut character = Character {
         name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
         alignment: (Conformity::Lawful, Morality::Neutral),
@@ -72,20 +84,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         damage: 0,
         equipment: ItemSlots::default(),
     };
-    character.add_class(
-        Class::try_from(class::Template {
-            name: "Artificer".into(),
-            level: 12,
-            saving_throw_proficiencies: HashMap::from([
-                (Ability::Constitution, Proficiency::Proficiency),
-                (Ability::Intelligence, Proficiency::Proficiency),
-            ]),
-            spell_list: Some(SpellList::default()),
-            hp_increases: HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]).unwrap(),
-            feats: vec![],
-        })
-        .unwrap(),
-    );
+    character.add_class(artificer);
     character.add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")));
     character.add_equipment_slot("left hand", Slot::new(|_| true));
     character.add_equipment_slot("cloak", Slot::new(|_| true));

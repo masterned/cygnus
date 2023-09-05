@@ -65,7 +65,7 @@ pub enum Effect {
     Fire,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Spell {
     name: String,
     level: usize,
@@ -142,7 +142,7 @@ impl Spell {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct SpellList(Vec<Spell>);
 
 impl From<Vec<Spell>> for SpellList {
