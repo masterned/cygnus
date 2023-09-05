@@ -33,6 +33,7 @@ pub enum Gender {
     Female,
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct Personality {
     pub personality_traits: Vec<String>,
     pub ideals: Vec<String>,

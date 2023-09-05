@@ -62,12 +62,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         name: "𝛴𝜄𝛾𝜈𝜐𝜍".into(),
         alignment: (Conformity::Lawful, Morality::Neutral),
         gender: Some(Gender::Male),
-        personality: Personality {
-            personality_traits: vec![],
-            ideals: vec![],
-            bonds: vec![],
-            flaws: vec![],
-        },
+        personality: Personality::default(),
         race,
         abilities: Abilities::from(AbilitiesTemplate {
             strength: Some(10),
