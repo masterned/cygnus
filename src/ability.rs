@@ -45,7 +45,7 @@ pub struct Abilities {
 
 impl Abilities {
     #[must_use]
-    pub fn get_score(&self, ability: &Ability) -> Option<usize> {
+    pub fn get_score(&self, ability: Ability) -> Option<usize> {
         match ability {
             Ability::Strength => self.strength,
             Ability::Dexterity => self.dexterity,
@@ -68,7 +68,7 @@ impl Abilities {
     }
 
     #[must_use]
-    pub fn get_modifier(&self, ability: &Ability) -> Option<isize> {
+    pub fn get_modifier(&self, ability: Ability) -> Option<isize> {
         self.get_score(ability)
             .map(|ability_score| ability_score as isize / 2 - 5)
     }
@@ -122,7 +122,7 @@ mod tests {
             ..Abilities::default()
         };
 
-        assert_eq!(abilities.get_modifier(&Ability::Strength), Some(0));
+        assert_eq!(abilities.get_modifier(Ability::Strength), Some(0));
     }
 
     #[test]
@@ -136,11 +136,11 @@ mod tests {
             ..Abilities::default()
         };
 
-        assert_eq!(abilities.get_modifier(&Ability::Strength), Some(-1));
-        assert_eq!(abilities.get_modifier(&Ability::Dexterity), Some(-2));
-        assert_eq!(abilities.get_modifier(&Ability::Constitution), Some(-3));
-        assert_eq!(abilities.get_modifier(&Ability::Intelligence), Some(-4));
-        assert_eq!(abilities.get_modifier(&Ability::Wisdom), Some(-5));
+        assert_eq!(abilities.get_modifier(Ability::Strength), Some(-1));
+        assert_eq!(abilities.get_modifier(Ability::Dexterity), Some(-2));
+        assert_eq!(abilities.get_modifier(Ability::Constitution), Some(-3));
+        assert_eq!(abilities.get_modifier(Ability::Intelligence), Some(-4));
+        assert_eq!(abilities.get_modifier(Ability::Wisdom), Some(-5));
     }
 
     #[test]
@@ -154,10 +154,10 @@ mod tests {
             ..Abilities::default()
         };
 
-        assert_eq!(abilities.get_modifier(&Ability::Strength), Some(1));
-        assert_eq!(abilities.get_modifier(&Ability::Dexterity), Some(2));
-        assert_eq!(abilities.get_modifier(&Ability::Constitution), Some(3));
-        assert_eq!(abilities.get_modifier(&Ability::Intelligence), Some(4));
-        assert_eq!(abilities.get_modifier(&Ability::Wisdom), Some(5));
+        assert_eq!(abilities.get_modifier(Ability::Strength), Some(1));
+        assert_eq!(abilities.get_modifier(Ability::Dexterity), Some(2));
+        assert_eq!(abilities.get_modifier(Ability::Constitution), Some(3));
+        assert_eq!(abilities.get_modifier(Ability::Intelligence), Some(4));
+        assert_eq!(abilities.get_modifier(Ability::Wisdom), Some(5));
     }
 }

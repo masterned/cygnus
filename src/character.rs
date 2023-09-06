@@ -278,17 +278,17 @@ impl Character {
     #[must_use]
     pub fn get_hit_points_max(&self) -> usize {
         self.classes
-            .get_hit_points(self.get_ability_modifier(&Ability::Constitution))
+            .get_hit_points(self.get_ability_modifier(Ability::Constitution))
     }
 
     #[must_use]
     pub fn get_initiative(&self) -> isize {
-        self.get_ability_modifier(&Ability::Dexterity)
+        self.get_ability_modifier(Ability::Dexterity)
     }
 
     #[must_use]
     pub fn get_armor_class(&self) -> usize {
-        let dex_mod = self.get_ability_modifier(&Ability::Dexterity);
+        let dex_mod = self.get_ability_modifier(Ability::Dexterity);
         self.equipment
             .get_equipped_items()
             .iter()
@@ -333,7 +333,7 @@ impl Character {
     }
 
     #[must_use]
-    pub fn get_ability_score(&self, ability: &Ability) -> usize {
+    pub fn get_ability_score(&self, ability: Ability) -> usize {
         self.get_abilities().get_score(ability).unwrap_or(0)
     }
 
@@ -342,7 +342,7 @@ impl Character {
     }
 
     #[must_use]
-    pub fn get_ability_modifier(&self, ability: &Ability) -> isize {
+    pub fn get_ability_modifier(&self, ability: Ability) -> isize {
         self.get_abilities().get_modifier(ability).unwrap_or(0)
     }
 
@@ -357,12 +357,12 @@ impl Character {
     }
 
     #[must_use]
-    pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
+    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<&Proficiency> {
         self.classes.get_saving_throw_proficiency(ability)
     }
 
     #[must_use]
-    pub fn get_saving_throw_mod(&self, ability: &Ability) -> isize {
+    pub fn get_saving_throw_mod(&self, ability: Ability) -> isize {
         self.get_proficiency_bonus() as isize
             * (self
                 .get_saving_throw_proficiency(ability)
@@ -377,7 +377,7 @@ impl Character {
     #[must_use]
     pub fn get_variant_encumbrance(&self) -> Option<Encumbrance> {
         let total_weight_carried = self.get_total_weight_carried();
-        let strength_score = self.get_ability_score(&Ability::Strength);
+        let strength_score = self.get_ability_score(Ability::Strength);
 
         if total_weight_carried > (10 * strength_score) {
             Some(Encumbrance::HeavilyEncumbered)
@@ -402,8 +402,8 @@ impl Character {
     }
 
     #[must_use]
-    pub fn get_skill_modifier(&self, skill: &Skill) -> isize {
-        self.get_ability_modifier(&skill.get_ability())
+    pub fn get_skill_modifier(&self, skill: Skill) -> isize {
+        self.get_ability_modifier(skill.get_ability())
             + (match self.skill_proficiencies.get_proficiency(skill) {
                 Some(Proficiency::Proficiency) => self.get_proficiency_bonus(),
                 Some(Proficiency::Expertise) => self.get_proficiency_bonus() * 2,
@@ -413,17 +413,17 @@ impl Character {
 
     #[must_use]
     pub fn get_passive_perception(&self) -> usize {
-        (10 + self.get_skill_modifier(&Skill::Perception)) as usize
+        (10 + self.get_skill_modifier(Skill::Perception)) as usize
     }
 
     #[must_use]
     pub fn get_passive_investigation(&self) -> usize {
-        (10 + self.get_skill_modifier(&Skill::Investigation)) as usize
+        (10 + self.get_skill_modifier(Skill::Investigation)) as usize
     }
 
     #[must_use]
     pub fn get_passive_insight(&self) -> usize {
-        (10 + self.get_skill_modifier(&Skill::Insight)) as usize
+        (10 + self.get_skill_modifier(Skill::Insight)) as usize
     }
 
     pub fn add_class(&mut self, class: Class) {
@@ -525,7 +525,7 @@ mod tests {
     fn _should_get_saving_throw_mod_without_proficiency() {
         let character = Character::dummy();
 
-        assert_eq!(character.get_saving_throw_mod(&Ability::Strength), -1);
+        assert_eq!(character.get_saving_throw_mod(Ability::Strength), -1);
     }
 
     #[test]
@@ -533,7 +533,7 @@ mod tests {
         let mut character = Character::dummy();
         character.add_class(Class::artificer());
 
-        assert_eq!(character.get_saving_throw_mod(&Ability::Constitution), 1);
+        assert_eq!(character.get_saving_throw_mod(Ability::Constitution), 1);
     }
 
     #[test]
@@ -670,7 +670,7 @@ mod tests {
     fn _skill_modifier_should_default_to_related_ability_modifier() {
         let character = Character::dummy();
 
-        assert_eq!(character.get_skill_modifier(&Skill::Arcana), -1);
+        assert_eq!(character.get_skill_modifier(Skill::Arcana), -1);
     }
 
     #[test]
@@ -681,7 +681,7 @@ mod tests {
             .skill_proficiencies
             .set_proficiency(Skill::Arcana, Some(Proficiency::Proficiency));
 
-        assert_eq!(character.get_skill_modifier(&Skill::Arcana), 1);
+        assert_eq!(character.get_skill_modifier(Skill::Arcana), 1);
     }
 
     #[test]
@@ -692,7 +692,7 @@ mod tests {
             .skill_proficiencies
             .set_proficiency(Skill::Arcana, Some(Proficiency::Expertise));
 
-        assert_eq!(character.get_skill_modifier(&Skill::Arcana), 3);
+        assert_eq!(character.get_skill_modifier(Skill::Arcana), 3);
     }
 
     #[test]

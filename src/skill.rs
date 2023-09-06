@@ -52,8 +52,8 @@ pub struct Skills(HashMap<Skill, Option<Proficiency>>);
 
 impl Skills {
     #[must_use]
-    pub fn get_proficiency(&self, skill: &Skill) -> Option<Proficiency> {
-        self.0.get(skill).and_then(|&proficiency| proficiency)
+    pub fn get_proficiency(&self, skill: Skill) -> Option<Proficiency> {
+        self.0.get(&skill).and_then(|&proficiency| proficiency)
     }
 
     pub fn set_proficiency(&mut self, skill: Skill, proficiency: Option<Proficiency>) {

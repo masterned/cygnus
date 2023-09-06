@@ -236,8 +236,8 @@ impl Class {
     }
 
     #[must_use]
-    pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
-        self.saving_throw_proficiencies.get(ability)
+    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<&Proficiency> {
+        self.saving_throw_proficiencies.get(&ability)
     }
 
     pub fn get_spell_list(&self) -> Option<&SpellList> {
@@ -281,7 +281,7 @@ impl Classes {
     }
 
     #[must_use]
-    pub fn get_saving_throw_proficiency(&self, ability: &Ability) -> Option<&Proficiency> {
+    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<&Proficiency> {
         self.0
             .first()
             .and_then(|primary_class| primary_class.get_saving_throw_proficiency(ability))
@@ -530,27 +530,27 @@ mod tests {
         let classless = Classes::default();
 
         assert_eq!(
-            classless.get_saving_throw_proficiency(&Ability::Strength),
+            classless.get_saving_throw_proficiency(Ability::Strength),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(&Ability::Dexterity),
+            classless.get_saving_throw_proficiency(Ability::Dexterity),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(&Ability::Constitution),
+            classless.get_saving_throw_proficiency(Ability::Constitution),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(&Ability::Intelligence),
+            classless.get_saving_throw_proficiency(Ability::Intelligence),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(&Ability::Wisdom),
+            classless.get_saving_throw_proficiency(Ability::Wisdom),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(&Ability::Charisma),
+            classless.get_saving_throw_proficiency(Ability::Charisma),
             None
         );
     }
@@ -560,27 +560,27 @@ mod tests {
         let monoclass = Classes(vec![Class::artificer()]);
 
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(&Ability::Strength),
+            monoclass.get_saving_throw_proficiency(Ability::Strength),
             None
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(&Ability::Dexterity),
+            monoclass.get_saving_throw_proficiency(Ability::Dexterity),
             None
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(&Ability::Constitution),
+            monoclass.get_saving_throw_proficiency(Ability::Constitution),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(&Ability::Intelligence),
+            monoclass.get_saving_throw_proficiency(Ability::Intelligence),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(&Ability::Wisdom),
+            monoclass.get_saving_throw_proficiency(Ability::Wisdom),
             None
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(&Ability::Charisma),
+            monoclass.get_saving_throw_proficiency(Ability::Charisma),
             None
         );
     }
@@ -590,27 +590,27 @@ mod tests {
         let multiclass = Classes(vec![Class::wizard(), Class::artificer()]);
 
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(&Ability::Strength),
+            multiclass.get_saving_throw_proficiency(Ability::Strength),
             None
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(&Ability::Dexterity),
+            multiclass.get_saving_throw_proficiency(Ability::Dexterity),
             None
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(&Ability::Constitution),
+            multiclass.get_saving_throw_proficiency(Ability::Constitution),
             None
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(&Ability::Intelligence),
+            multiclass.get_saving_throw_proficiency(Ability::Intelligence),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(&Ability::Wisdom),
+            multiclass.get_saving_throw_proficiency(Ability::Wisdom),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(&Ability::Charisma),
+            multiclass.get_saving_throw_proficiency(Ability::Charisma),
             None
         );
     }

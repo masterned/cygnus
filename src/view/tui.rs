@@ -140,47 +140,52 @@ fn render_abilities<B: Backend>(frame: &mut Frame<B>, area: Rect, abilities: &Ab
     render_ability(
         frame,
         layout[1],
-        &Ability::Strength.to_string(),
-        abilities.get_score(&Ability::Strength).unwrap_or(0),
+        Ability::Strength.to_string(),
+        abilities.get_score(Ability::Strength).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[2],
-        &Ability::Dexterity.to_string(),
-        abilities.get_score(&Ability::Dexterity).unwrap_or(0),
+        Ability::Dexterity.to_string(),
+        abilities.get_score(Ability::Dexterity).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[3],
-        &Ability::Constitution.to_string(),
-        abilities.get_score(&Ability::Constitution).unwrap_or(0),
+        Ability::Constitution.to_string(),
+        abilities.get_score(Ability::Constitution).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[4],
-        &Ability::Intelligence.to_string(),
-        abilities.get_score(&Ability::Intelligence).unwrap_or(0),
+        Ability::Intelligence.to_string(),
+        abilities.get_score(Ability::Intelligence).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[5],
-        &Ability::Wisdom.to_string(),
-        abilities.get_score(&Ability::Wisdom).unwrap_or(0),
+        Ability::Wisdom.to_string(),
+        abilities.get_score(Ability::Wisdom).unwrap_or(0),
     );
     render_ability(
         frame,
         layout[6],
-        &Ability::Charisma.to_string(),
-        abilities.get_score(&Ability::Charisma).unwrap_or(0),
+        Ability::Charisma.to_string(),
+        abilities.get_score(Ability::Charisma).unwrap_or(0),
     );
 }
 
-fn render_ability<B: Backend>(frame: &mut Frame<B>, area: Rect, title: &str, score: usize) {
+fn render_ability<B: Backend>(
+    frame: &mut Frame<B>,
+    area: Rect,
+    title: impl Into<String>,
+    score: usize,
+) {
     let ability_block = Paragraph::new(score.to_string())
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(title)
+                .title(title.into())
                 .title_alignment(Alignment::Center),
         )
         .alignment(Alignment::Center);
