@@ -6,6 +6,7 @@ use crate::{
     feat::Feat,
     item::{Item, Items},
     modifiers::{Encumbrance, Proficiency},
+    personality::Personality,
     race::{CreatureType, Race, Size},
     skill::{Skill, Skills},
     slot::{ItemSlots, Slot, SlotsError},
@@ -31,14 +32,6 @@ pub type Alignment = (Conformity, Morality);
 pub enum Gender {
     Male,
     Female,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct Personality {
-    pub personality_traits: Vec<String>,
-    pub ideals: Vec<String>,
-    pub bonds: Vec<String>,
-    pub flaws: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -511,12 +504,7 @@ mod tests {
                 }),
                 race: Race::human(),
                 classes: Classes::default(),
-                personality: Personality {
-                    personality_traits: vec![],
-                    ideals: vec![],
-                    bonds: vec![],
-                    flaws: vec![],
-                },
+                personality: Personality::default(),
                 skill_proficiencies: Skills::default(),
                 inventory: Items::default(),
                 exhaustion_level: 0,

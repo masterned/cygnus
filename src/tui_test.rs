@@ -9,6 +9,7 @@ use cygnus::{
     class::{self, HPIncreases},
     feat::Feat,
     item::{self, ArmorClass},
+    personality::Personality,
     race::{self, Condition, DamageType, Language},
     slot::Slot,
     spell::SpellList,
@@ -48,6 +49,14 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
     let hp_increases = HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])
         .unwrap_or_else(|e| panic!("Unable to create HP Increases: {e}"));
 
+    let personality = Personality::default()
+        .add_trait("I always have a plan for what to do when things go wrong.")
+        .add_trait("I am incredibly slow to trust. Those who seem the fairest often have the most to hide.")
+        .add_ideal("Honor. I don’t steal from others in the trade. (Lawful)")
+        .add_bond("Something important was taken from me, and I aim to steal it back.")
+        .add_bond("Someone I loved died because of a mistake I made. That will never happen again.")
+        .add_flaw("I turn tail and run when things look bad.");
+
     let artificer = class::Builder::new()
         .name("Artificer")
         .and_then(|c| c.level(12))
@@ -61,6 +70,7 @@ fn ui<B: Backend>(f: &mut Frame<B>) {
         .name("𝛴𝜄𝛾𝜈𝜐𝜍")
         .and_then(|c| c.alignment(Conformity::Lawful, Morality::Neutral))
         .and_then(|c| c.gender(Gender::Male))
+        .and_then(|c| c.personality(personality))
         .and_then(|c| c.race(race))
         .and_then(|c| {
             c.ability_scores(Abilities::from(AbilitiesTemplate {
