@@ -220,11 +220,24 @@ name = "cygnus"
 version = "0.1.0"
 dependencies = [
  "crossterm",
+ "cygnus_models",
+ "cygnus_utils",
  "dotenvy",
  "sqlx",
  "tokio",
  "tui",
 ]
+
+[[package]]
+name = "cygnus_models"
+version = "0.1.0"
+dependencies = [
+ "cygnus_utils",
+]
+
+[[package]]
+name = "cygnus_utils"
+version = "0.1.0"
 
 [[package]]
 name = "der"

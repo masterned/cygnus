@@ -5,7 +5,7 @@ use tui::{
     Frame,
 };
 
-use crate::{
+use cygnus_models::{
     ability::{Abilities, Ability},
     character::Character,
 };

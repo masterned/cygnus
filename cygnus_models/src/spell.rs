@@ -1,6 +1,6 @@
-use crate::{
-    ability::Ability, dice::Roll, race::DamageType, utils::lower_bound_map::LowerBoundMap,
-};
+use cygnus_utils::lower_bound_map::LowerBoundMap;
+
+use crate::{ability::Ability, dice::Roll, race::DamageType};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CastingTime {

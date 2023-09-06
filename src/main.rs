@@ -3,7 +3,8 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use cygnus::{
+use cygnus::tui::render_character;
+use cygnus_models::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{self, Conformity, Gender, Morality},
     class::{self, HPIncreases},
@@ -13,7 +14,6 @@ use cygnus::{
     race::{self, Condition, DamageType, Language},
     slot::Slot,
     spell::SpellList,
-    view::tui::render_character,
 };
 use std::{
     io,
