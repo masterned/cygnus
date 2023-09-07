@@ -1,20 +1,10 @@
-[package]
-name = "cygnus"
-version = "0.1.0"
-edition = "2021"
-default-run = "cygnus"
+[workspace]
+members = [
+  "cygnus_models",
+  "cygnus_tui",
+  "cygnus_utils"
+]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-tui = "0.19"
-crossterm = "0.25"
-sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite" ] }
-tokio = { version = "1", features = ["full"] }
-dotenvy = "0.15.7"
-cygnus_models = { path = "./cygnus_models" }
-cygnus_utils = { path = "./cygnus_utils" }
-
-[[bin]]
-name = "db_test"
-path = "src/db_test.rs"
+default_members = [
+  "cygnus_tui"
+]
