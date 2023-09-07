@@ -2,9 +2,8 @@ use cygnus_tui::app::{App, AppResult};
 use cygnus_tui::event::{Event, EventHandler};
 use cygnus_tui::handler::handle_key_events;
 use cygnus_tui::tui::Tui;
+use ratatui::prelude::*;
 use std::io;
-use tui::backend::CrosstermBackend;
-use tui::Terminal;
 
 fn main() -> AppResult<()> {
     // Create an application.

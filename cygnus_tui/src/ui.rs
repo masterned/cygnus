@@ -1,10 +1,4 @@
-use tui::{
-    backend::Backend,
-    layout::Alignment,
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Paragraph},
-    Frame,
-};
+use ratatui::{prelude::*, widgets::*};
 
 use crate::app::App;
 
