@@ -12,14 +12,18 @@ pub enum Ability {
 
 impl fmt::Display for Ability {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Ability::Strength => write!(f, "STR"),
-            Ability::Dexterity => write!(f, "DEX"),
-            Ability::Constitution => write!(f, "CON"),
-            Ability::Intelligence => write!(f, "INT"),
-            Ability::Wisdom => write!(f, "WIS"),
-            Ability::Charisma => write!(f, "CHA"),
-        }
+        write!(
+            f,
+            "{}",
+            match self {
+                Ability::Strength => "Strength",
+                Ability::Dexterity => "Dexterity",
+                Ability::Constitution => "Constitution",
+                Ability::Intelligence => "Intelligence",
+                Ability::Wisdom => "Wisdom",
+                Ability::Charisma => "Charisma",
+            }
+        )
     }
 }
 

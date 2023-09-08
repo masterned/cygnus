@@ -174,6 +174,8 @@ impl fmt::Display for ClassConstructionError {
     }
 }
 
+impl error::Error for ClassConstructionError {}
+
 pub struct Template {
     pub name: String,
     pub level: usize,

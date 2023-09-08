@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, error, fmt};
 
 use crate::{
     ability::{Abilities, Ability},
@@ -187,6 +187,8 @@ impl fmt::Display for RaceConstructionError {
         write!(f, "{result}")
     }
 }
+
+impl error::Error for RaceConstructionError {}
 
 pub struct Template {
     pub name: String,

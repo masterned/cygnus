@@ -1,6 +1,34 @@
-use ratatui::{prelude::*, widgets::*};
+use cygnus_models::{ability::Ability, character::Character};
+use ratatui::{
+    prelude::*,
+    widgets::{
+        block::{Position, Title},
+        Block, BorderType, Borders, Paragraph,
+    },
+};
 
 use crate::app::App;
+
+fn ability_widget(character: &Character, ability: Ability) -> Paragraph {
+    let modifier = character.get_ability_modifier(ability);
+    Paragraph::new(format!(
+        "{}{}",
+        if modifier < 0 { "-" } else { "+" },
+        modifier
+    ))
+    .alignment(Alignment::Center)
+    .block(
+        Block::new()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .title(Title::from(ability.to_string()).alignment(Alignment::Center))
+            .title(
+                Title::from(character.get_ability_score(ability).to_string())
+                    .alignment(Alignment::Center)
+                    .position(Position::Bottom),
+            ),
+    )
+}
 
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
@@ -8,23 +36,12 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // See the following resources:
     // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
     // - https://github.com/ratatui-org/ratatui/tree/master/examples
-    frame.render_widget(
-        Paragraph::new(format!(
-            "This is a tui template.\n\
-                Press `Esc`, `Ctrl-C` or `q` to stop running.\n\
-                Press left and right to increment and decrement the counter respectively.\n\
-                Counter: {}",
-            app.counter
-        ))
-        .block(
-            Block::default()
-                .title("Template")
-                .title_alignment(Alignment::Center)
-                .borders(Borders::ALL)
-                .border_type(BorderType::Rounded),
-        )
-        .style(Style::default().fg(Color::Cyan).bg(Color::Black))
-        .alignment(Alignment::Center),
-        frame.size(),
-    )
+    let ability = ability_widget(
+        app.character
+            .as_ref()
+            .expect("Need a character to render it."),
+        Ability::Intelligence,
+    );
+
+    frame.render_widget(ability, frame.size())
 }

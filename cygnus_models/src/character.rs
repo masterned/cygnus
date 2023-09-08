@@ -224,6 +224,7 @@ impl fmt::Display for ConstructionError {
 
 impl error::Error for ConstructionError {}
 
+#[derive(Debug)]
 pub struct Character {
     name: String,
     alignment: Alignment,
