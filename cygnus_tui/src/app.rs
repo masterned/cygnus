@@ -3,7 +3,7 @@ use std::error;
 use cygnus_models::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{self, Character, Conformity, Gender, Morality},
-    class,
+    class::{self, HPIncreases},
     personality::Personality,
     race,
 };
@@ -43,9 +43,12 @@ impl App {
             .add_ability(Ability::Dexterity, 1)
             .build()?;
 
+        let hp_increases = HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])?;
+
         let artificer = class::Builder::new()
             .name("Artificer")?
             .level(12)?
+            .hp_increases(hp_increases)?
             .build()?;
 
         let character = character::Builder::new()

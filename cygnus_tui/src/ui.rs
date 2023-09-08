@@ -68,6 +68,60 @@ fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, re
     frame.render_widget(header_widget, rect);
 }
 
+fn render_health_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
+    let health_block = Block::new()
+        .title(
+            Title::from("Hit Points")
+                .alignment(Alignment::Center)
+                .position(Position::Bottom),
+        )
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+
+    frame.render_widget(health_block.clone(), rect);
+
+    let health_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Ratio(2, 7),
+            Constraint::Ratio(1, 7),
+            Constraint::Ratio(2, 7),
+            Constraint::Ratio(2, 7),
+        ])
+        .split(health_block.inner(rect));
+
+    frame.render_widget(
+        Paragraph::new(character.get_current_hit_points().to_string())
+            .alignment(Alignment::Center)
+            .block(
+                Block::new()
+                    .title("Current")
+                    .title_alignment(Alignment::Center),
+            ),
+        health_layout[0],
+    );
+    frame.render_widget(
+        Paragraph::new("/")
+            .alignment(Alignment::Center)
+            .block(Block::new().title("").title_alignment(Alignment::Center)),
+        health_layout[1],
+    );
+    frame.render_widget(
+        Paragraph::new(character.get_hit_points_max().to_string())
+            .alignment(Alignment::Center)
+            .block(Block::new().title("Max").title_alignment(Alignment::Center)),
+        health_layout[2],
+    );
+    frame.render_widget(
+        Paragraph::new("--").alignment(Alignment::Center).block(
+            Block::new()
+                .title("Temp")
+                .title_alignment(Alignment::Center),
+        ),
+        health_layout[3],
+    );
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -85,10 +139,12 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         .constraints([
             Constraint::Ratio(1, 10),
             Constraint::Ratio(1, 10),
+            Constraint::Ratio(1, 10),
             Constraint::Min(0),
         ])
         .split(frame.size());
 
     render_header(frame, character_ref, layout[0]);
     render_abilities(frame, character_ref, layout[1]);
+    render_health_block(frame, character_ref, layout[2]);
 }
