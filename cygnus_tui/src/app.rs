@@ -1,7 +1,7 @@
 use std::error;
 
 use cygnus_models::{
-    ability::{Abilities, AbilitiesTemplate},
+    ability::{Abilities, AbilitiesTemplate, Ability},
     character::{self, Character, Conformity, Gender, Morality},
     class,
     personality::Personality,
@@ -37,7 +37,11 @@ impl App {
         let personality = Personality::default()
             .add_trait("I always have a plan for what to do when things go wrong.");
 
-        let race = race::Builder::new().name("Haskellian").build()?;
+        let race = race::Builder::new()
+            .name("Haskellian")
+            .add_ability(Ability::Intelligence, 2)
+            .add_ability(Ability::Dexterity, 1)
+            .build()?;
 
         let artificer = class::Builder::new()
             .name("Artificer")?

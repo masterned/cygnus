@@ -10,6 +10,19 @@ pub enum Ability {
     Charisma,
 }
 
+impl Ability {
+    pub fn all() -> Vec<Ability> {
+        vec![
+            Ability::Strength,
+            Ability::Dexterity,
+            Ability::Constitution,
+            Ability::Intelligence,
+            Ability::Wisdom,
+            Ability::Charisma,
+        ]
+    }
+}
+
 impl fmt::Display for Ability {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

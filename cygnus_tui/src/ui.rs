@@ -30,18 +30,42 @@ fn ability_widget(character: &Character, ability: Ability) -> Paragraph {
     )
 }
 
+fn render_ability_widget<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    ability: Ability,
+    rect: Rect,
+) {
+    let ability = ability_widget(character, ability);
+
+    frame.render_widget(ability, rect);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
     // See the following resources:
     // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
     // - https://github.com/ratatui-org/ratatui/tree/master/examples
-    let ability = ability_widget(
-        app.character
-            .as_ref()
-            .expect("Need a character to render it."),
-        Ability::Intelligence,
-    );
+    let layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![
+            Constraint::Ratio(1, 6),
+            Constraint::Ratio(1, 6),
+            Constraint::Ratio(1, 6),
+            Constraint::Ratio(1, 6),
+            Constraint::Ratio(1, 6),
+            Constraint::Ratio(1, 6),
+        ])
+        .split(frame.size());
 
-    frame.render_widget(ability, frame.size())
+    let character_ref = app
+        .character
+        .as_ref()
+        .expect("Can't render a `Character` if it doesn't exist.");
+
+    Ability::all()
+        .iter()
+        .enumerate()
+        .for_each(|(i, &ability)| render_ability_widget(frame, character_ref, ability, layout[i]));
 }
