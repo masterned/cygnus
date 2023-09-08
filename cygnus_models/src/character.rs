@@ -34,6 +34,19 @@ pub enum Gender {
     Female,
 }
 
+impl fmt::Display for Gender {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Gender::Male => "Male",
+                Gender::Female => "Female",
+            }
+        )
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Builder {
     name: Option<String>,

@@ -52,6 +52,22 @@ fn render_abilities<B: Backend>(frame: &mut Frame<'_, B>, character: &Character,
     });
 }
 
+fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
+    let header_widget = Paragraph::new(format!(
+        "{}\n{} {} {}\nLevel {}",
+        character.get_name(),
+        character
+            .get_gender()
+            .map(|g| g.to_string())
+            .unwrap_or("".into()),
+        character.get_race_name(),
+        character.get_class_details(),
+        character.get_level()
+    ));
+
+    frame.render_widget(header_widget, rect);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -64,5 +80,15 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         .as_ref()
         .expect("Can't render a `Character` if it doesn't exist.");
 
-    render_abilities(frame, character_ref, frame.size());
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Ratio(1, 10),
+            Constraint::Ratio(1, 10),
+            Constraint::Min(0),
+        ])
+        .split(frame.size());
+
+    render_header(frame, character_ref, layout[0]);
+    render_abilities(frame, character_ref, layout[1]);
 }
