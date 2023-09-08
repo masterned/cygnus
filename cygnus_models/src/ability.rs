@@ -21,6 +21,17 @@ impl Ability {
             Ability::Charisma,
         ]
     }
+
+    pub fn abbr(&self) -> &str {
+        match self {
+            Ability::Strength => "Str",
+            Ability::Dexterity => "Dex",
+            Ability::Constitution => "Con",
+            Ability::Intelligence => "Int",
+            Ability::Wisdom => "Wis",
+            Ability::Charisma => "Cha",
+        }
+    }
 }
 
 impl fmt::Display for Ability {

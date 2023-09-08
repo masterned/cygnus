@@ -11,23 +11,19 @@ use crate::app::App;
 
 fn ability_widget(character: &Character, ability: Ability) -> Paragraph {
     let modifier = character.get_ability_modifier(ability);
-    Paragraph::new(format!(
-        "{}{}",
-        if modifier < 0 { "-" } else { "+" },
-        modifier
-    ))
-    .alignment(Alignment::Center)
-    .block(
-        Block::new()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded)
-            .title(Title::from(ability.to_string()).alignment(Alignment::Center))
-            .title(
-                Title::from(character.get_ability_score(ability).to_string())
-                    .alignment(Alignment::Center)
-                    .position(Position::Bottom),
-            ),
-    )
+    Paragraph::new(format!("{modifier:+}"))
+        .alignment(Alignment::Center)
+        .block(
+            Block::new()
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
+                .title(Title::from(ability.to_string()).alignment(Alignment::Center))
+                .title(
+                    Title::from(character.get_ability_score(ability).to_string())
+                        .alignment(Alignment::Center)
+                        .position(Position::Bottom),
+                ),
+        )
 }
 
 fn render_ability_widget<B: Backend>(
@@ -122,6 +118,72 @@ fn render_health_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
     );
 }
 
+fn render_saving_throw_pair<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    ability: Ability,
+    rect: Rect,
+) {
+    let saving_throw_pair_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 2); 2])
+        .split(rect);
+
+    frame.render_widget(
+        Paragraph::new(ability.abbr()).alignment(Alignment::Center),
+        saving_throw_pair_layout[0],
+    );
+
+    let saving_throw_mod = character.get_saving_throw_mod(ability);
+
+    frame.render_widget(
+        Paragraph::new(format!("{saving_throw_mod:+}")).alignment(Alignment::Center),
+        saving_throw_pair_layout[1],
+    );
+}
+
+fn render_saving_throw_row<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    ability_left: Ability,
+    ability_right: Ability,
+    rect: Rect,
+) {
+    let saving_throw_row_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 2); 2])
+        .split(rect);
+
+    render_saving_throw_pair(frame, character, ability_left, saving_throw_row_layout[0]);
+    render_saving_throw_pair(frame, character, ability_right, saving_throw_row_layout[1]);
+}
+
+fn render_saving_throws_block<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    rect: Rect,
+) {
+    let saving_throws_block = Block::new()
+        .title(
+            Title::from("Saving Throws")
+                .alignment(Alignment::Center)
+                .position(Position::Bottom),
+        )
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+
+    frame.render_widget(saving_throws_block.clone(), rect);
+
+    let saving_throw_rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Ratio(1, 3); 3])
+        .split(saving_throws_block.inner(rect));
+
+    Ability::all().chunks(2).enumerate().for_each(|(i, pair)| {
+        render_saving_throw_row(frame, character, pair[0], pair[1], saving_throw_rows[i])
+    });
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -140,6 +202,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             Constraint::Ratio(1, 10),
             Constraint::Ratio(1, 10),
             Constraint::Ratio(1, 10),
+            Constraint::Ratio(2, 10),
             Constraint::Min(0),
         ])
         .split(frame.size());
@@ -147,4 +210,5 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     render_header(frame, character_ref, layout[0]);
     render_abilities(frame, character_ref, layout[1]);
     render_health_block(frame, character_ref, layout[2]);
+    render_saving_throws_block(frame, character_ref, layout[3]);
 }

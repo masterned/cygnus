@@ -49,6 +49,8 @@ impl App {
             .name("Artificer")?
             .level(12)?
             .hp_increases(hp_increases)?
+            .add_saving_throw_proficiency(Ability::Intelligence)?
+            .add_saving_throw_proficiency(Ability::Constitution)?
             .build()?;
 
         let character = character::Builder::new()
