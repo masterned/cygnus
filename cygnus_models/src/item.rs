@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{error, fmt};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ArmorClass {
@@ -76,6 +76,8 @@ impl fmt::Display for ItemConstructionError {
         write!(f, "{result}")
     }
 }
+
+impl error::Error for ItemConstructionError {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Item {

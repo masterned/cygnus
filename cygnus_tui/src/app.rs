@@ -4,8 +4,10 @@ use cygnus_models::{
     ability::{Abilities, AbilitiesTemplate, Ability},
     character::{self, Character, Conformity, Gender, Morality},
     class::{self, HPIncreases},
+    item::{self, ArmorClass},
     personality::Personality,
     race,
+    slot::Slot,
 };
 
 /// Application result type.
@@ -53,7 +55,7 @@ impl App {
             .add_saving_throw_proficiency(Ability::Constitution)?
             .build()?;
 
-        let character = character::Builder::new()
+        let mut character = character::Builder::new()
             .name("𝛴𝜄𝛾𝜈𝜐𝜍")?
             .alignment(Conformity::Lawful, Morality::Neutral)?
             .gender(Gender::Male)?
@@ -68,7 +70,33 @@ impl App {
                 charisma: Some(10),
             }))?
             .add_class(artificer)?
+            .add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")))?
+            .add_equipment_slot("cloak", Slot::new(|item| item.has_type("cloak")))?
+            .add_equipment_slot("left hand", Slot::new(|item| item.has_type("hand")))?
             .build()?;
+
+        let mithral_plate = item::Builder::new()
+            .set_name("Mithral Plate")
+            .set_weight(45)
+            .set_armor_class(ArmorClass::Heavy(18))
+            .add_type("armor")
+            .build()?;
+        character.equip_item(mithral_plate, "armor")?;
+
+        let cloak_of_protection = item::Builder::new()
+            .set_name("Cloak of Protection")
+            .set_armor_class(ArmorClass::Heavy(1))
+            .add_type("cloak")
+            .build()?;
+        character.equip_item(cloak_of_protection, "cloak")?;
+
+        let shield = item::Builder::new()
+            .set_name("Shield")
+            .set_armor_class(ArmorClass::Heavy(2))
+            .set_weight(6)
+            .add_type("hand")
+            .build()?;
+        character.equip_item(shield, "left hand")?;
 
         self.character = Some(character);
 

@@ -184,6 +184,28 @@ fn render_saving_throws_block<B: Backend>(
     });
 }
 
+fn render_armor_class<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
+    let armor_class = Paragraph::new(format!("{}", character.get_armor_class()))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
+                .title(
+                    Title::from("Armor")
+                        .alignment(Alignment::Center)
+                        .position(Position::Top),
+                )
+                .title(
+                    Title::from("Class")
+                        .alignment(Alignment::Center)
+                        .position(Position::Bottom),
+                ),
+        )
+        .alignment(Alignment::Center);
+
+    frame.render_widget(armor_class, rect);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -203,6 +225,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             Constraint::Ratio(1, 10),
             Constraint::Ratio(1, 10),
             Constraint::Ratio(2, 10),
+            Constraint::Ratio(1, 10),
             Constraint::Min(0),
         ])
         .split(frame.size());
@@ -211,4 +234,5 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     render_abilities(frame, character_ref, layout[1]);
     render_health_block(frame, character_ref, layout[2]);
     render_saving_throws_block(frame, character_ref, layout[3]);
+    render_armor_class(frame, character_ref, layout[4]);
 }
