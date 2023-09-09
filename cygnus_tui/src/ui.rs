@@ -206,6 +206,23 @@ fn render_armor_class<B: Backend>(frame: &mut Frame<'_, B>, character: &Characte
     frame.render_widget(armor_class, rect);
 }
 
+fn render_initiative<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
+    let initiative = Paragraph::new(format!("{:+}", character.get_initiative()))
+        .block(
+            Block::default()
+                .title(
+                    Title::from("Initiative")
+                        .alignment(Alignment::Center)
+                        .position(Position::Top),
+                )
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .alignment(Alignment::Center);
+
+    frame.render_widget(initiative, rect);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -234,5 +251,12 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     render_abilities(frame, character_ref, layout[1]);
     render_health_block(frame, character_ref, layout[2]);
     render_saving_throws_block(frame, character_ref, layout[3]);
-    render_armor_class(frame, character_ref, layout[4]);
+
+    let stat_row_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 4); 4])
+        .split(layout[4]);
+
+    render_initiative(frame, character_ref, stat_row_layout[2]);
+    render_armor_class(frame, character_ref, stat_row_layout[3]);
 }
