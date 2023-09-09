@@ -223,6 +223,32 @@ fn render_initiative<B: Backend>(frame: &mut Frame<'_, B>, character: &Character
     frame.render_widget(initiative, rect);
 }
 
+fn render_proficiency_bonus<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    area: Rect,
+) {
+    let proficiency_bonus = Paragraph::new(format!("{:+}", character.get_proficiency_bonus()))
+        .block(
+            Block::default()
+                .title(
+                    Title::from("Proficiency")
+                        .alignment(Alignment::Center)
+                        .position(Position::Top),
+                )
+                .title(
+                    Title::from("Bonus")
+                        .alignment(Alignment::Center)
+                        .position(Position::Bottom),
+                )
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .alignment(Alignment::Center);
+
+    frame.render_widget(proficiency_bonus, area);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -257,6 +283,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         .constraints([Constraint::Ratio(1, 4); 4])
         .split(layout[4]);
 
+    render_proficiency_bonus(frame, character_ref, stat_row_layout[0]);
     render_initiative(frame, character_ref, stat_row_layout[2]);
     render_armor_class(frame, character_ref, stat_row_layout[3]);
 }
