@@ -144,19 +144,20 @@ pub type SlotsResult<T> = Result<T, SlotsError>;
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
+
     use crate::item;
 
     use super::*;
 
     #[test]
-    fn _should_equip_if_valid() -> SlotResult<()> {
+    fn _should_equip_if_valid() -> Result<(), Box<dyn Error>> {
         let mut vc = Slot::new(|item: &Item| item.has_type("armor"));
 
         let item = item::Builder::new()
-            .set_name("one")
-            .add_type("armor")
-            .build()
-            .unwrap();
+            .name("one")?
+            .add_type("armor")?
+            .build()?;
         vc.equip(item.clone())?;
 
         assert_eq!(vc.value, Some(item));
@@ -165,29 +166,33 @@ mod tests {
     }
 
     #[test]
-    fn _should_return_err_if_equip_not_valid() {
+    fn _should_return_err_if_equip_not_valid() -> Result<(), Box<dyn Error>> {
         let mut vc = Slot::new(|item: &Item| item.has_type("armor"));
 
-        let not_armor = item::Builder::new().set_name("not armor").build().unwrap();
+        let not_armor = item::Builder::new().name("not armor")?.build()?;
         let result = vc.equip(not_armor);
 
         assert!(
             matches!(result, Err(SlotError::Invalid)),
             "Should return Err"
         );
+
+        Ok(())
     }
 
     #[test]
-    fn _should_prevent_equipping_multiple_things_to_same_slot() {
+    fn _should_prevent_equipping_multiple_things_to_same_slot() -> Result<(), Box<dyn Error>> {
         let mut vc = Slot::new(|_: &Item| true);
 
-        let item1 = item::Builder::new().set_name("item 1").build().unwrap();
+        let item1 = item::Builder::new().name("item 1")?.build()?;
         let _ = vc.equip(item1.clone());
 
-        let item2 = item::Builder::new().set_name("item 2").build().unwrap();
+        let item2 = item::Builder::new().name("item 2")?.build()?;
         let result = vc.equip(item2);
 
         assert!(matches!(result, Err(SlotError::Full)));
+
+        Ok(())
     }
 
     #[test]
@@ -198,10 +203,10 @@ mod tests {
     }
 
     #[test]
-    fn _should_return_stored_thing_on_unequip() -> SlotResult<()> {
+    fn _should_return_stored_thing_on_unequip() -> Result<(), Box<dyn Error>> {
         let mut vc = Slot::new(|_: &Item| true);
 
-        let item = item::Builder::new().set_name("dummy").build().unwrap();
+        let item = item::Builder::new().name("dummy")?.build()?;
         let _ = vc.equip(item.clone());
 
         assert_eq!(vc.unequip()?, item);
@@ -210,10 +215,10 @@ mod tests {
     }
 
     #[test]
-    fn _should_remove_value_from_slot_on_unequip() -> SlotResult<()> {
+    fn _should_remove_value_from_slot_on_unequip() -> Result<(), Box<dyn Error>> {
         let mut vc = Slot::new(|_: &Item| true);
 
-        let item = item::Builder::new().set_name("dummy").build().unwrap();
+        let item = item::Builder::new().name("dummy")?.build()?;
         vc.value = Some(item);
         let _ = vc.unequip()?;
 
@@ -223,38 +228,38 @@ mod tests {
     }
 
     mod slots {
+        use std::error::Error;
+
         use crate::item::ArmorClass;
 
         use super::*;
 
         #[test]
-        fn _should_allow_equipping_to_multiple_slots() -> SlotsResult<()> {
+        fn _should_allow_equipping_to_multiple_slots() -> Result<(), Box<dyn Error>> {
             let mut equipment = ItemSlots::default();
             equipment.add_slot("armor", Slot::new(|item| item.has_type("armor")));
             equipment.add_slot("right hand", Slot::new(|item| item.has_type("weapon")));
 
             let chain_mail = item::Builder::new()
-                .set_name("Chain Mail")
-                .set_weight(55)
-                .add_type("armor")
-                .set_armor_class(ArmorClass::Heavy(16))
-                .build()
-                .unwrap();
+                .name("Chain Mail")?
+                .weight(55)?
+                .add_type("armor")?
+                .armor_class(ArmorClass::Heavy(16))?
+                .build()?;
             equipment.equip(chain_mail, "armor")?;
 
             let rapier = item::Builder::new()
-                .set_name("Rapier")
-                .set_weight(2)
-                .add_type("weapon")
-                .build()
-                .unwrap();
+                .name("Rapier")?
+                .weight(2)?
+                .add_type("weapon")?
+                .build()?;
             equipment.equip(rapier, "right hand")?;
 
             Ok(())
         }
 
         #[test]
-        fn _should_return_whether_contains_thing_of_given_type() -> SlotsResult<()> {
+        fn _should_return_whether_contains_thing_of_given_type() -> Result<(), Box<dyn Error>> {
             let mut equipment = ItemSlots::default();
             equipment.add_slot("armor", Slot::new(|item| item.has_type("armor")));
             equipment.add_slot("right hand", Slot::new(|item| item.has_type("weapon")));
@@ -262,21 +267,19 @@ mod tests {
             let armor_criteria = |item: &Item| item.has_type("armor");
 
             let rapier = item::Builder::new()
-                .set_name("Rapier")
-                .set_weight(2)
-                .add_type("weapon")
-                .build()
-                .unwrap();
+                .name("Rapier")?
+                .weight(2)?
+                .add_type("weapon")?
+                .build()?;
             equipment.equip(rapier, "right hand")?;
             assert!(!equipment.has_item_equipped_matching_criteria(armor_criteria));
 
             let chain_mail = item::Builder::new()
-                .set_name("Chain Mail")
-                .set_weight(55)
-                .add_type("armor")
-                .set_armor_class(ArmorClass::Heavy(16))
-                .build()
-                .unwrap();
+                .name("Chain Mail")?
+                .weight(55)?
+                .add_type("armor")?
+                .armor_class(ArmorClass::Heavy(16))?
+                .build()?;
             equipment.equip(chain_mail, "armor")?;
             assert!(equipment.has_item_equipped_matching_criteria(armor_criteria));
 
@@ -284,26 +287,24 @@ mod tests {
         }
 
         #[test]
-        fn _should_return_the_total_weight_of_equipped_items() -> SlotsResult<()> {
+        fn _should_return_the_total_weight_of_equipped_items() -> Result<(), Box<dyn Error>> {
             let mut equipment = ItemSlots::default();
             equipment.add_slot("armor", Slot::new(|_: &Item| true));
             equipment.add_slot("right hand", Slot::new(|_: &Item| true));
 
             let chain_mail = item::Builder::new()
-                .set_name("Chain Mail")
-                .set_weight(55)
-                .add_type("armor")
-                .set_armor_class(ArmorClass::Heavy(16))
-                .build()
-                .unwrap();
+                .name("Chain Mail")?
+                .weight(55)?
+                .add_type("armor")?
+                .armor_class(ArmorClass::Heavy(16))?
+                .build()?;
             equipment.equip(chain_mail, "armor")?;
 
             let rapier = item::Builder::new()
-                .set_name("Rapier")
-                .set_weight(2)
-                .add_type("weapon")
-                .build()
-                .unwrap();
+                .name("Rapier")?
+                .weight(2)?
+                .add_type("weapon")?
+                .build()?;
             equipment.equip(rapier, "right hand")?;
 
             assert_eq!(equipment.get_total_weight(), 57);

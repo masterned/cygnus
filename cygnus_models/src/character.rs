@@ -4,7 +4,7 @@ use crate::{
     ability::{Abilities, Ability},
     class::{Class, Classes},
     feat::Feat,
-    item::{Item, Items},
+    item::{self, Item, Items},
     modifiers::{Encumbrance, Proficiency},
     personality::Personality,
     race::{CreatureType, Race, Size},
@@ -473,6 +473,7 @@ type CharacterResult<T> = Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     Equipment(SlotsError),
+    Inventory(item::ConstructionError),
 }
 
 impl From<SlotsError> for Error {
@@ -481,10 +482,17 @@ impl From<SlotsError> for Error {
     }
 }
 
+impl From<item::ConstructionError> for Error {
+    fn from(value: item::ConstructionError) -> Self {
+        Error::Inventory(value)
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let result = match self {
             Error::Equipment(e) => format!("Equipment: {e}"),
+            Error::Inventory(e) => format!("Inventory: {e}"),
         };
 
         write!(f, "{result}")
@@ -572,90 +580,84 @@ mod tests {
     }
 
     #[test]
-    fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered() {
+    fn _characters_with_more_than_5_times_strength_score_in_item_weight_should_be_encumbered(
+    ) -> CharacterResult<()> {
         let mut character = Character::dummy();
 
-        let item = item::Builder::new()
-            .set_name("test")
-            .set_weight(46)
-            .build()
-            .unwrap();
+        let item = item::Builder::new().name("test")?.weight(46)?.build()?;
         character.add_item(item);
 
         assert_eq!(
             character.get_variant_encumbrance(),
             Some(Encumbrance::Encumbered)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered() {
+    fn _characters_with_more_than_10_times_str_score_in_item_weight_should_be_heavily_encumbered(
+    ) -> CharacterResult<()> {
         let mut character = Character::dummy();
 
-        let item = item::Builder::new()
-            .set_name("test")
-            .set_weight(91)
-            .build()
-            .unwrap();
+        let item = item::Builder::new().name("test")?.weight(91)?.build()?;
         character.add_item(item);
 
         assert_eq!(
             character.get_variant_encumbrance(),
             Some(Encumbrance::HeavilyEncumbered)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn _should_include_inventory_and_equipment_in_total_carried_weight() {
+    fn _should_include_inventory_and_equipment_in_total_carried_weight() -> CharacterResult<()> {
         let mut character = Character::dummy();
 
         let rapier = item::Builder::new()
-            .set_name("Rapier")
-            .set_weight(2)
-            .add_type("weapon")
-            .build()
-            .unwrap();
+            .name("Rapier")?
+            .weight(2)?
+            .add_type("weapon")?
+            .build()?;
         character.add_item(rapier);
 
         character.add_equipment_slot("armor", Slot::new(|_| true));
         let chain_mail = item::Builder::new()
-            .set_name("Chain Mail")
-            .set_weight(55)
-            .add_type("armor")
-            .set_armor_class(ArmorClass::Heavy(16))
-            .build()
-            .unwrap();
+            .name("Chain Mail")?
+            .weight(55)?
+            .add_type("armor")?
+            .armor_class(ArmorClass::Heavy(16))?
+            .build()?;
         let _ = character.equip_item(chain_mail, "armor");
 
         assert_eq!(character.get_total_weight_carried(), 57);
+
+        Ok(())
     }
 
     #[test]
-    fn _encumbered_characters_should_reduce_their_speed_by_10() {
+    fn _encumbered_characters_should_reduce_their_speed_by_10() -> CharacterResult<()> {
         let mut character = Character::dummy();
 
-        let item = item::Builder::new()
-            .set_name("test")
-            .set_weight(46)
-            .build()
-            .unwrap();
+        let item = item::Builder::new().name("test")?.weight(46)?.build()?;
         character.add_item(item);
 
         assert_eq!(character.get_walking_speed(), 20);
+
+        Ok(())
     }
 
     #[test]
-    fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() {
+    fn _heavily_encumbered_characters_should_reduce_their_speed_by_20() -> CharacterResult<()> {
         let mut character = Character::dummy();
 
-        let item = item::Builder::new()
-            .set_name("test")
-            .set_weight(91)
-            .build()
-            .unwrap();
+        let item = item::Builder::new().name("test")?.weight(91)?.build()?;
         character.add_item(item);
 
         assert_eq!(character.get_walking_speed(), 10);
+
+        Ok(())
     }
 
     #[test]
@@ -779,21 +781,19 @@ mod tests {
         character.add_equipment_slot("helmet", Slot::new(|_| true));
 
         let breastplate = item::Builder::new()
-            .set_name("Breastplate")
-            .set_weight(25)
-            .add_type("armor")
-            .set_armor_class(ArmorClass::Medium(14))
-            .build()
-            .unwrap();
+            .name("Breastplate")?
+            .weight(25)?
+            .add_type("armor")?
+            .armor_class(ArmorClass::Medium(14))?
+            .build()?;
         character.equip_item(breastplate, "chestplate")?;
 
         let pickelbonnet = item::Builder::new()
-            .set_name("Pickelbonnet")
-            .set_weight(2)
-            .add_type("armor")
-            .set_armor_class(ArmorClass::Heavy(3))
-            .build()
-            .unwrap();
+            .name("Pickelbonnet")?
+            .weight(2)?
+            .add_type("armor")?
+            .armor_class(ArmorClass::Heavy(3))?
+            .build()?;
         character.equip_item(pickelbonnet, "helmet")?;
 
         assert_eq!(character.get_armor_class(), 16);

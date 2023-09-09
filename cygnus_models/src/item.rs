@@ -20,35 +20,38 @@ impl Builder {
         Builder::default()
     }
 
-    pub fn set_name(&mut self, name: impl Into<String>) -> &mut Self {
-        self.name = Some(name.into());
+    pub fn name(mut self, name: impl Into<String>) -> Result<Self, ConstructionError> {
+        let name: String = name.into();
 
-        self
+        if name.is_empty() {
+            return Err(ConstructionError::MissingName);
+        }
+
+        self.name = Some(name);
+
+        Ok(self)
     }
 
-    pub fn set_weight(&mut self, weight: usize) -> &mut Self {
+    pub fn weight(mut self, weight: usize) -> Result<Self, ConstructionError> {
         self.weight = Some(weight);
 
-        self
+        Ok(self)
     }
 
-    pub fn add_type(&mut self, new_type: impl Into<String>) -> &mut Self {
+    pub fn add_type(mut self, new_type: impl Into<String>) -> Result<Self, ConstructionError> {
         self.types.push(new_type.into());
 
-        self
+        Ok(self)
     }
 
-    pub fn set_armor_class(&mut self, armor_class: ArmorClass) -> &mut Self {
+    pub fn armor_class(mut self, armor_class: ArmorClass) -> Result<Self, ConstructionError> {
         self.armor_class = Some(armor_class);
 
-        self
+        Ok(self)
     }
 
-    pub fn build(&self) -> Result<Item, ItemConstructionError> {
-        let name = self
-            .name
-            .clone()
-            .ok_or(ItemConstructionError::MissingName)?;
+    pub fn build(self) -> Result<Item, ConstructionError> {
+        let name = self.name.ok_or(ConstructionError::MissingName)?;
         let weight = self.weight.unwrap_or(0);
         let types = self.types.clone();
         let armor_class = self.armor_class;
@@ -63,21 +66,21 @@ impl Builder {
 }
 
 #[derive(Debug)]
-pub enum ItemConstructionError {
+pub enum ConstructionError {
     MissingName,
 }
 
-impl fmt::Display for ItemConstructionError {
+impl fmt::Display for ConstructionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let result = match self {
-            ItemConstructionError::MissingName => "Cannot create an Item without a name.",
+            ConstructionError::MissingName => "Cannot create an Item without a name.",
         };
 
         write!(f, "{result}")
     }
 }
 
-impl error::Error for ItemConstructionError {}
+impl error::Error for ConstructionError {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Item {

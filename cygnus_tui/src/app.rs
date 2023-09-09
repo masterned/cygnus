@@ -76,25 +76,25 @@ impl App {
             .build()?;
 
         let mithral_plate = item::Builder::new()
-            .set_name("Mithral Plate")
-            .set_weight(45)
-            .set_armor_class(ArmorClass::Heavy(18))
-            .add_type("armor")
+            .name("Mithral Plate")?
+            .weight(65)?
+            .armor_class(ArmorClass::Heavy(18))?
+            .add_type("armor")?
             .build()?;
         character.equip_item(mithral_plate, "armor")?;
 
         let cloak_of_protection = item::Builder::new()
-            .set_name("Cloak of Protection")
-            .set_armor_class(ArmorClass::Heavy(1))
-            .add_type("cloak")
+            .name("Cloak of Protection")?
+            .armor_class(ArmorClass::Heavy(1))?
+            .add_type("cloak")?
             .build()?;
         character.equip_item(cloak_of_protection, "cloak")?;
 
         let shield = item::Builder::new()
-            .set_name("Shield")
-            .set_armor_class(ArmorClass::Heavy(2))
-            .set_weight(6)
-            .add_type("hand")
+            .name("Shield")?
+            .armor_class(ArmorClass::Heavy(2))?
+            .weight(6)?
+            .add_type("hand")?
             .build()?;
         character.equip_item(shield, "left hand")?;
 
@@ -102,6 +102,7 @@ impl App {
 
         Ok(())
     }
+
     /// Constructs a new instance of [`App`].
     pub fn new() -> Self {
         let mut app = Self::default();
