@@ -1,9 +1,9 @@
-use cygnus_models::{ability, character::Character};
+use cygnus_models::{ability, character::Character, modifiers::Proficiency, skill::Skill};
 use ratatui::{
     prelude::*,
     widgets::{
         block::{Position, Title},
-        Block, BorderType, Borders, Paragraph,
+        Block, BorderType, Borders, Cell, Paragraph, Row, Table,
     },
 };
 
@@ -277,6 +277,49 @@ fn render_walking_speed<B: Backend>(frame: &mut Frame<'_, B>, character: &Charac
     frame.render_widget(walking_speed, area);
 }
 
+pub fn render_skills_table<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    area: Rect,
+) {
+    let header_cells = ["Prof", "Mod", "Skill", "Bonus"]
+        .iter()
+        .map(|&h| Cell::from(h));
+    let header = Row::new(header_cells).height(1).bottom_margin(1);
+    let skills = Skill::all();
+    let rows = skills.iter().map(|&id| {
+        let cells = [
+            Cell::from(format!(
+                "{}",
+                match character.get_skill_proficiency(id) {
+                    Some(Proficiency::Proficiency) => "x",
+                    Some(Proficiency::Expertise) => "*",
+                    None => "o",
+                }
+            )),
+            Cell::from(format!("{}", id.get_ability().abbr())),
+            Cell::from(format!("{id}")),
+            Cell::from(format!("{:+}", character.get_skill_modifier(id))),
+        ];
+        Row::new(cells)
+    });
+    let table = Table::new(rows)
+        .header(header)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
+                .title(
+                    Title::from("Skills")
+                        .alignment(Alignment::Center)
+                        .position(Position::Bottom),
+                ),
+        )
+        .widths([Constraint::Ratio(1, 4); 4].as_ref());
+
+    frame.render_widget(table, area);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -292,11 +335,12 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Ratio(1, 10),
-            Constraint::Ratio(1, 10),
-            Constraint::Ratio(1, 10),
-            Constraint::Ratio(2, 10),
-            Constraint::Ratio(1, 10),
+            Constraint::Ratio(1, 16),
+            Constraint::Ratio(1, 16),
+            Constraint::Ratio(1, 8),
+            Constraint::Ratio(1, 8),
+            Constraint::Ratio(1, 16),
+            Constraint::Ratio(1, 2),
             Constraint::Min(0),
         ])
         .split(frame.size());
@@ -315,4 +359,6 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     render_walking_speed(frame, character_ref, stat_row_layout[1]);
     render_initiative(frame, character_ref, stat_row_layout[2]);
     render_armor_class(frame, character_ref, stat_row_layout[3]);
+
+    render_skills_table(frame, character_ref, layout[5]);
 }

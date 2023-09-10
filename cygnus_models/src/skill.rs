@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 use crate::{ability, modifiers::Proficiency};
 
@@ -25,6 +25,29 @@ pub enum Skill {
 }
 
 impl Skill {
+    pub fn all() -> Vec<Skill> {
+        vec![
+            Skill::Acrobatics,
+            Skill::AnimalHandling,
+            Skill::Arcana,
+            Skill::Athletics,
+            Skill::Deception,
+            Skill::History,
+            Skill::Insight,
+            Skill::Intimidation,
+            Skill::Investigation,
+            Skill::Medicine,
+            Skill::Nature,
+            Skill::Perception,
+            Skill::Performance,
+            Skill::Persuasion,
+            Skill::Religion,
+            Skill::SlightOfHand,
+            Skill::Stealth,
+            Skill::Survival,
+        ]
+    }
+
     #[must_use]
     pub fn get_ability(&self) -> ability::Identifier {
         match self {
@@ -46,6 +69,35 @@ impl Skill {
                 ability::Identifier::Charisma
             }
         }
+    }
+}
+
+impl fmt::Display for Skill {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Skill::Acrobatics => "Acrobatics",
+                Skill::AnimalHandling => "Animal Handling",
+                Skill::Arcana => "Arcana",
+                Skill::Athletics => "Athletics",
+                Skill::Deception => "Deception",
+                Skill::History => "History",
+                Skill::Insight => "Insight",
+                Skill::Intimidation => "Intimidation",
+                Skill::Investigation => "Investigation",
+                Skill::Medicine => "Medicine",
+                Skill::Nature => "Nature",
+                Skill::Perception => "Perception",
+                Skill::Performance => "Performance",
+                Skill::Persuasion => "Persuasion",
+                Skill::Religion => "Religion",
+                Skill::SlightOfHand => "Slight of Hand",
+                Skill::Stealth => "Stealth",
+                Skill::Survival => "Survival",
+            }
+        )
     }
 }
 

@@ -423,10 +423,14 @@ impl Character {
         self.exhaustion_level = new_level;
     }
 
+    pub fn get_skill_proficiency(&self, skill: Skill) -> Option<Proficiency> {
+        self.skill_proficiencies.get_proficiency(skill)
+    }
+
     #[must_use]
     pub fn get_skill_modifier(&self, skill: Skill) -> isize {
         self.get_ability_modifier(skill.get_ability())
-            + (match self.skill_proficiencies.get_proficiency(skill) {
+            + (match self.get_skill_proficiency(skill) {
                 Some(Proficiency::Proficiency) => self.get_proficiency_bonus(),
                 Some(Proficiency::Expertise) => self.get_proficiency_bonus() * 2,
                 None => 0,
