@@ -1,7 +1,7 @@
 use std::{collections::HashMap, error, fmt};
 
 use crate::{
-    ability::{Abilities, Ability},
+    ability::{self, Abilities},
     feat::Feat,
     modifiers::Resistance,
 };
@@ -99,8 +99,8 @@ impl Builder {
         self
     }
 
-    pub fn add_ability(&mut self, ability: Ability, score: usize) -> &mut Self {
-        self.abilities.set_score(ability, Some(score));
+    pub fn add_ability(&mut self, ability: ability::Identifier, score: usize) -> &mut Self {
+        self.abilities.set_score(ability, score);
 
         self
     }
@@ -153,7 +153,7 @@ impl Builder {
         let creature_type = self.creature_type.unwrap_or_default();
         let size = self.size.unwrap_or_default();
         let walking_speed = self.walking_speed.unwrap_or(30);
-        let abilities = self.abilities;
+        let abilities = self.abilities.clone();
         let damage_resistances = self.damage_resistances.clone();
         let condition_resistances = self.condition_resistance.clone();
         let languages = self.languages.clone();
@@ -300,12 +300,12 @@ mod tests {
                 size: Size::Medium,
                 walking_speed: 30,
                 abilities: Abilities::from(AbilitiesTemplate {
-                    strength: Some(1),
-                    dexterity: Some(1),
-                    constitution: Some(1),
-                    intelligence: Some(1),
-                    wisdom: Some(1),
-                    charisma: Some(1),
+                    strength: 1,
+                    dexterity: 1,
+                    constitution: 1,
+                    intelligence: 1,
+                    wisdom: 1,
+                    charisma: 1,
                 }),
                 damage_resistances: HashMap::new(),
                 condition_resistances: HashMap::new(),
@@ -322,8 +322,8 @@ mod tests {
                 size: Size::Medium,
                 walking_speed: 30,
                 abilities: Abilities::from(AbilitiesTemplate {
-                    intelligence: Some(2),
-                    dexterity: Some(1),
+                    intelligence: 2,
+                    dexterity: 1,
                     ..AbilitiesTemplate::default()
                 }),
                 damage_resistances: HashMap::from([(DamageType::Necrotic, Resistance::Resistant)]),

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ability::Ability, modifiers::Proficiency};
+use crate::{ability, modifiers::Proficiency};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Skill {
@@ -26,22 +26,24 @@ pub enum Skill {
 
 impl Skill {
     #[must_use]
-    pub fn get_ability(&self) -> Ability {
+    pub fn get_ability(&self) -> ability::Identifier {
         match self {
-            Skill::Acrobatics | Skill::SlightOfHand | Skill::Stealth => Ability::Dexterity,
+            Skill::Acrobatics | Skill::SlightOfHand | Skill::Stealth => {
+                ability::Identifier::Dexterity
+            }
             Skill::AnimalHandling
             | Skill::Insight
             | Skill::Medicine
             | Skill::Perception
-            | Skill::Survival => Ability::Wisdom,
+            | Skill::Survival => ability::Identifier::Wisdom,
             Skill::Arcana
             | Skill::History
             | Skill::Investigation
             | Skill::Nature
-            | Skill::Religion => Ability::Intelligence,
-            Skill::Athletics => Ability::Strength,
+            | Skill::Religion => ability::Identifier::Intelligence,
+            Skill::Athletics => ability::Identifier::Strength,
             Skill::Deception | Skill::Intimidation | Skill::Performance | Skill::Persuasion => {
-                Ability::Charisma
+                ability::Identifier::Charisma
             }
         }
     }

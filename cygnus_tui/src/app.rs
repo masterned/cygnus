@@ -1,7 +1,7 @@
 use std::error;
 
 use cygnus_models::{
-    ability::{Abilities, AbilitiesTemplate, Ability},
+    ability::{self, Abilities, AbilitiesTemplate},
     character::{self, Character, Conformity, Gender, Morality},
     class::{self, HPIncreases},
     item::{self, ArmorClass},
@@ -41,8 +41,8 @@ impl App {
 
         let race = race::Builder::new()
             .name("Haskellian")
-            .add_ability(Ability::Intelligence, 2)
-            .add_ability(Ability::Dexterity, 1)
+            .add_ability(ability::Identifier::Intelligence, 2)
+            .add_ability(ability::Identifier::Dexterity, 1)
             .build()?;
 
         let hp_increases = HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])?;
@@ -51,8 +51,8 @@ impl App {
             .name("Artificer")?
             .level(12)?
             .hp_increases(hp_increases)?
-            .add_saving_throw_proficiency(Ability::Intelligence)?
-            .add_saving_throw_proficiency(Ability::Constitution)?
+            .add_saving_throw_proficiency(ability::Identifier::Intelligence)?
+            .add_saving_throw_proficiency(ability::Identifier::Constitution)?
             .build()?;
 
         let mut character = character::Builder::new()
@@ -61,13 +61,13 @@ impl App {
             .gender(Gender::Male)?
             .personality(personality)?
             .race(race)?
-            .ability_scores(Abilities::from(AbilitiesTemplate {
-                strength: Some(10),
-                dexterity: Some(15),
-                constitution: Some(10),
-                intelligence: Some(15),
-                wisdom: Some(10),
-                charisma: Some(10),
+            .base_ability_scores(Abilities::from(AbilitiesTemplate {
+                strength: 10,
+                dexterity: 15,
+                constitution: 10,
+                intelligence: 15,
+                wisdom: 10,
+                charisma: 10,
             }))?
             .add_class(artificer)?
             .add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")))?

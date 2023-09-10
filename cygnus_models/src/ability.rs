@@ -1,7 +1,7 @@
-use std::{fmt, ops};
+use std::{collections::HashMap, fmt, ops};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Ability {
+pub enum Identifier {
     Strength,
     Dexterity,
     Constitution,
@@ -10,117 +10,123 @@ pub enum Ability {
     Charisma,
 }
 
-impl Ability {
-    pub fn all() -> Vec<Ability> {
+impl Identifier {
+    pub fn all() -> Vec<Identifier> {
         vec![
-            Ability::Strength,
-            Ability::Dexterity,
-            Ability::Constitution,
-            Ability::Intelligence,
-            Ability::Wisdom,
-            Ability::Charisma,
+            Identifier::Strength,
+            Identifier::Dexterity,
+            Identifier::Constitution,
+            Identifier::Intelligence,
+            Identifier::Wisdom,
+            Identifier::Charisma,
         ]
     }
 
     pub fn abbr(&self) -> &str {
         match self {
-            Ability::Strength => "Str",
-            Ability::Dexterity => "Dex",
-            Ability::Constitution => "Con",
-            Ability::Intelligence => "Int",
-            Ability::Wisdom => "Wis",
-            Ability::Charisma => "Cha",
+            Identifier::Strength => "Str",
+            Identifier::Dexterity => "Dex",
+            Identifier::Constitution => "Con",
+            Identifier::Intelligence => "Int",
+            Identifier::Wisdom => "Wis",
+            Identifier::Charisma => "Cha",
         }
     }
 }
 
-impl fmt::Display for Ability {
+impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Ability::Strength => "Strength",
-                Ability::Dexterity => "Dexterity",
-                Ability::Constitution => "Constitution",
-                Ability::Intelligence => "Intelligence",
-                Ability::Wisdom => "Wisdom",
-                Ability::Charisma => "Charisma",
+                Identifier::Strength => "Strength",
+                Identifier::Dexterity => "Dexterity",
+                Identifier::Constitution => "Constitution",
+                Identifier::Intelligence => "Intelligence",
+                Identifier::Wisdom => "Wisdom",
+                Identifier::Charisma => "Charisma",
             }
         )
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Ability {
+    score: usize,
+}
+
+impl Ability {
+    pub fn get_score(&self) -> usize {
+        self.score
+    }
+
+    pub fn get_modifier(&self) -> isize {
+        self.score as isize / 2 - 5
+    }
+}
+
+impl From<usize> for Ability {
+    fn from(value: usize) -> Self {
+        Ability { score: value }
+    }
+}
+
+impl ops::Add<Ability> for Ability {
+    type Output = Ability;
+
+    fn add(self, rhs: Ability) -> Self::Output {
+        Ability {
+            score: self.score + rhs.score,
+        }
+    }
+}
+
+impl ops::AddAssign<Ability> for Ability {
+    fn add_assign(&mut self, rhs: Ability) {
+        self.score += rhs.score;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct AbilitiesTemplate {
-    pub strength: Option<usize>,
-    pub dexterity: Option<usize>,
-    pub constitution: Option<usize>,
-    pub intelligence: Option<usize>,
-    pub wisdom: Option<usize>,
-    pub charisma: Option<usize>,
+    pub strength: usize,
+    pub dexterity: usize,
+    pub constitution: usize,
+    pub intelligence: usize,
+    pub wisdom: usize,
+    pub charisma: usize,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Abilities {
-    strength: Option<usize>,
-    dexterity: Option<usize>,
-    constitution: Option<usize>,
-    intelligence: Option<usize>,
-    wisdom: Option<usize>,
-    charisma: Option<usize>,
-}
+#[derive(Clone, Debug, Default)]
+pub struct Abilities(HashMap<Identifier, Ability>);
 
 impl Abilities {
-    #[must_use]
-    pub fn get_score(&self, ability: Ability) -> Option<usize> {
-        match ability {
-            Ability::Strength => self.strength,
-            Ability::Dexterity => self.dexterity,
-            Ability::Constitution => self.constitution,
-            Ability::Intelligence => self.intelligence,
-            Ability::Wisdom => self.wisdom,
-            Ability::Charisma => self.charisma,
-        }
-    }
-
-    pub fn set_score(&mut self, ability: Ability, score: Option<usize>) {
-        match ability {
-            Ability::Strength => self.strength = score,
-            Ability::Dexterity => self.dexterity = score,
-            Ability::Constitution => self.constitution = score,
-            Ability::Intelligence => self.intelligence = score,
-            Ability::Wisdom => self.wisdom = score,
-            Ability::Charisma => self.charisma = score,
-        }
+    pub fn set_score(&mut self, ability: Identifier, score: usize) {
+        self.0.insert(ability, Ability { score });
     }
 
     #[must_use]
-    pub fn get_modifier(&self, ability: Ability) -> Option<isize> {
-        self.get_score(ability)
-            .map(|ability_score| ability_score as isize / 2 - 5)
+    pub fn get_score(&self, ability: Identifier) -> Option<usize> {
+        self.0.get(&ability).map(|ability| ability.get_score())
+    }
+
+    #[must_use]
+    pub fn get_modifier(&self, ability: Identifier) -> Option<isize> {
+        self.0.get(&ability).map(|ability| ability.get_modifier())
     }
 }
 
 impl From<AbilitiesTemplate> for Abilities {
     fn from(value: AbilitiesTemplate) -> Self {
-        Abilities {
-            strength: value.strength,
-            dexterity: value.dexterity,
-            constitution: value.constitution,
-            intelligence: value.intelligence,
-            wisdom: value.wisdom,
-            charisma: value.charisma,
-        }
-    }
-}
-
-fn sum_options<T: ops::Add<Output = T>>(o1: Option<T>, o2: Option<T>) -> Option<T> {
-    match (o1, o2) {
-        (Some(v1), Some(v2)) => Some(v1 + v2),
-        (Some(v1), None) => Some(v1),
-        (None, Some(v2)) => Some(v2),
-        _ => None,
+        Self(HashMap::from([
+            (Identifier::Strength, value.strength.into()),
+            (Identifier::Dexterity, value.dexterity.into()),
+            (Identifier::Constitution, value.constitution.into()),
+            (Identifier::Intelligence, value.constitution.into()),
+            (Identifier::Wisdom, value.wisdom.into()),
+            (Identifier::Charisma, value.charisma.into()),
+        ]))
     }
 }
 
@@ -128,14 +134,16 @@ impl ops::Add<Abilities> for Abilities {
     type Output = Abilities;
 
     fn add(self, rhs: Abilities) -> Self::Output {
-        Abilities {
-            strength: sum_options(self.strength, rhs.strength),
-            dexterity: sum_options(self.dexterity, rhs.dexterity),
-            constitution: sum_options(self.constitution, rhs.constitution),
-            intelligence: sum_options(self.intelligence, rhs.intelligence),
-            wisdom: sum_options(self.wisdom, rhs.wisdom),
-            charisma: sum_options(self.charisma, rhs.charisma),
-        }
+        Abilities(self.0.iter().chain(rhs.0.iter()).fold(
+            HashMap::new(),
+            |mut acc, (&id, &new_ability)| {
+                acc.entry(id)
+                    .and_modify(|found_ability| *found_ability += new_ability)
+                    .or_insert(new_ability);
+
+                acc
+            },
+        ))
     }
 }
 
@@ -145,47 +153,38 @@ mod tests {
 
     #[test]
     fn _ability_score_of_10_should_have_modifier_of_0() {
-        let abilities = Abilities {
-            strength: Some(10),
-            ..Abilities::default()
-        };
+        let strength = Ability { score: 10 };
 
-        assert_eq!(abilities.get_modifier(Ability::Strength), Some(0));
+        assert_eq!(strength.get_modifier(), 0);
     }
 
     #[test]
     fn _ability_scores_less_than_10_should_have_negative_modifier() {
-        let abilities = Abilities {
-            strength: Some(8),
-            dexterity: Some(6),
-            constitution: Some(4),
-            intelligence: Some(2),
-            wisdom: Some(0),
-            ..Abilities::default()
-        };
+        let strength = Ability { score: 9 };
+        let dexterity = Ability { score: 7 };
+        let constitution = Ability { score: 5 };
+        let intelligence = Ability { score: 3 };
+        let wisdom = Ability { score: 1 };
 
-        assert_eq!(abilities.get_modifier(Ability::Strength), Some(-1));
-        assert_eq!(abilities.get_modifier(Ability::Dexterity), Some(-2));
-        assert_eq!(abilities.get_modifier(Ability::Constitution), Some(-3));
-        assert_eq!(abilities.get_modifier(Ability::Intelligence), Some(-4));
-        assert_eq!(abilities.get_modifier(Ability::Wisdom), Some(-5));
+        assert_eq!(strength.get_modifier(), -1);
+        assert_eq!(dexterity.get_modifier(), -2);
+        assert_eq!(constitution.get_modifier(), -3);
+        assert_eq!(intelligence.get_modifier(), -4);
+        assert_eq!(wisdom.get_modifier(), -5);
     }
 
     #[test]
-    fn _ability_scores_greater_than_10_should_have_positive_modifiers() {
-        let abilities = Abilities {
-            strength: Some(12),
-            dexterity: Some(14),
-            constitution: Some(16),
-            intelligence: Some(18),
-            wisdom: Some(20),
-            ..Abilities::default()
-        };
+    fn _ability_scores_greater_than_11_should_have_positive_modifiers() {
+        let strength = Ability { score: 12 };
+        let dexterity = Ability { score: 14 };
+        let constitution = Ability { score: 16 };
+        let intelligence = Ability { score: 18 };
+        let wisdom = Ability { score: 20 };
 
-        assert_eq!(abilities.get_modifier(Ability::Strength), Some(1));
-        assert_eq!(abilities.get_modifier(Ability::Dexterity), Some(2));
-        assert_eq!(abilities.get_modifier(Ability::Constitution), Some(3));
-        assert_eq!(abilities.get_modifier(Ability::Intelligence), Some(4));
-        assert_eq!(abilities.get_modifier(Ability::Wisdom), Some(5));
+        assert_eq!(strength.get_modifier(), 1);
+        assert_eq!(dexterity.get_modifier(), 2);
+        assert_eq!(constitution.get_modifier(), 3);
+        assert_eq!(intelligence.get_modifier(), 4);
+        assert_eq!(wisdom.get_modifier(), 5);
     }
 }

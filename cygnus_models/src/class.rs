@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error, fmt};
 
-use crate::{ability::Ability, feat::Feat, modifiers::Proficiency, spell::SpellList};
+use crate::{ability, feat::Feat, modifiers::Proficiency, spell::SpellList};
 
 #[derive(Clone, Debug, Default)]
 pub struct HPIncreases(Vec<usize>);
@@ -69,7 +69,7 @@ impl error::Error for HPIncreaseConstructionError {}
 pub struct Builder {
     name: Option<String>,
     level: Option<usize>,
-    saving_throw_proficiencies: HashMap<Ability, Proficiency>,
+    saving_throw_proficiencies: HashMap<ability::Identifier, Proficiency>,
     spell_list: Option<SpellList>,
     hp_increases: Option<HPIncreases>,
     feats: Vec<Feat>,
@@ -104,7 +104,7 @@ impl Builder {
 
     pub fn add_saving_throw_proficiency(
         mut self,
-        ability: Ability,
+        ability: ability::Identifier,
     ) -> Result<Self, ClassConstructionError> {
         self.saving_throw_proficiencies
             .insert(ability, Proficiency::Proficiency);
@@ -179,7 +179,7 @@ impl error::Error for ClassConstructionError {}
 pub struct Template {
     pub name: String,
     pub level: usize,
-    pub saving_throw_proficiencies: HashMap<Ability, Proficiency>,
+    pub saving_throw_proficiencies: HashMap<ability::Identifier, Proficiency>,
     pub spell_list: Option<SpellList>,
     pub hp_increases: HPIncreases,
     pub feats: Vec<Feat>,
@@ -189,7 +189,7 @@ pub struct Template {
 pub struct Class {
     name: String,
     level: usize,
-    saving_throw_proficiencies: HashMap<Ability, Proficiency>,
+    saving_throw_proficiencies: HashMap<ability::Identifier, Proficiency>,
     spell_list: Option<SpellList>,
     hp_increases: HPIncreases,
     feats: Vec<Feat>,
@@ -238,7 +238,10 @@ impl Class {
     }
 
     #[must_use]
-    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<&Proficiency> {
+    pub fn get_saving_throw_proficiency(
+        &self,
+        ability: ability::Identifier,
+    ) -> Option<&Proficiency> {
         self.saving_throw_proficiencies.get(&ability)
     }
 
@@ -283,7 +286,10 @@ impl Classes {
     }
 
     #[must_use]
-    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<&Proficiency> {
+    pub fn get_saving_throw_proficiency(
+        &self,
+        ability: ability::Identifier,
+    ) -> Option<&Proficiency> {
         self.0
             .first()
             .and_then(|primary_class| primary_class.get_saving_throw_proficiency(ability))
@@ -324,8 +330,8 @@ mod tests {
                 name: "Wizard".into(),
                 level: 1,
                 saving_throw_proficiencies: HashMap::from([
-                    (Ability::Intelligence, Proficiency::Proficiency),
-                    (Ability::Wisdom, Proficiency::Proficiency),
+                    (ability::Identifier::Intelligence, Proficiency::Proficiency),
+                    (ability::Identifier::Wisdom, Proficiency::Proficiency),
                 ]),
                 spell_list: Some(SpellList::default()),
                 hp_increases: HPIncreases::new(6),
@@ -339,8 +345,8 @@ mod tests {
                 name: "Artificer".into(),
                 level: 1,
                 saving_throw_proficiencies: HashMap::from([
-                    (Ability::Intelligence, Proficiency::Proficiency),
-                    (Ability::Constitution, Proficiency::Proficiency),
+                    (ability::Identifier::Intelligence, Proficiency::Proficiency),
+                    (ability::Identifier::Constitution, Proficiency::Proficiency),
                 ]),
                 spell_list: Some(SpellList::default()),
                 hp_increases: HPIncreases::new(8),
@@ -532,27 +538,27 @@ mod tests {
         let classless = Classes::default();
 
         assert_eq!(
-            classless.get_saving_throw_proficiency(Ability::Strength),
+            classless.get_saving_throw_proficiency(ability::Identifier::Strength),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(Ability::Dexterity),
+            classless.get_saving_throw_proficiency(ability::Identifier::Dexterity),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(Ability::Constitution),
+            classless.get_saving_throw_proficiency(ability::Identifier::Constitution),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(Ability::Intelligence),
+            classless.get_saving_throw_proficiency(ability::Identifier::Intelligence),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(Ability::Wisdom),
+            classless.get_saving_throw_proficiency(ability::Identifier::Wisdom),
             None
         );
         assert_eq!(
-            classless.get_saving_throw_proficiency(Ability::Charisma),
+            classless.get_saving_throw_proficiency(ability::Identifier::Charisma),
             None
         );
     }
@@ -562,27 +568,27 @@ mod tests {
         let monoclass = Classes(vec![Class::artificer()]);
 
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(Ability::Strength),
+            monoclass.get_saving_throw_proficiency(ability::Identifier::Strength),
             None
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(Ability::Dexterity),
+            monoclass.get_saving_throw_proficiency(ability::Identifier::Dexterity),
             None
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(Ability::Constitution),
+            monoclass.get_saving_throw_proficiency(ability::Identifier::Constitution),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(Ability::Intelligence),
+            monoclass.get_saving_throw_proficiency(ability::Identifier::Intelligence),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(Ability::Wisdom),
+            monoclass.get_saving_throw_proficiency(ability::Identifier::Wisdom),
             None
         );
         assert_eq!(
-            monoclass.get_saving_throw_proficiency(Ability::Charisma),
+            monoclass.get_saving_throw_proficiency(ability::Identifier::Charisma),
             None
         );
     }
@@ -592,27 +598,27 @@ mod tests {
         let multiclass = Classes(vec![Class::wizard(), Class::artificer()]);
 
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(Ability::Strength),
+            multiclass.get_saving_throw_proficiency(ability::Identifier::Strength),
             None
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(Ability::Dexterity),
+            multiclass.get_saving_throw_proficiency(ability::Identifier::Dexterity),
             None
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(Ability::Constitution),
+            multiclass.get_saving_throw_proficiency(ability::Identifier::Constitution),
             None
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(Ability::Intelligence),
+            multiclass.get_saving_throw_proficiency(ability::Identifier::Intelligence),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(Ability::Wisdom),
+            multiclass.get_saving_throw_proficiency(ability::Identifier::Wisdom),
             Some(&Proficiency::Proficiency)
         );
         assert_eq!(
-            multiclass.get_saving_throw_proficiency(Ability::Charisma),
+            multiclass.get_saving_throw_proficiency(ability::Identifier::Charisma),
             None
         );
     }

@@ -1,6 +1,6 @@
 use cygnus_utils::lower_bound_map::LowerBoundMap;
 
-use crate::{ability::Ability, dice::Roll, race::DamageType};
+use crate::{ability, dice::Roll, race::DamageType};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CastingTime {
@@ -47,7 +47,7 @@ pub enum School {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AttackKind {
     Save {
-        ability: Ability,
+        ability: ability::Identifier,
     },
     Melee {
         additional_weapon_damage: LowerBoundMap<usize, (Roll, DamageType)>,
@@ -192,7 +192,7 @@ mod tests {
                 concentration: false,
                 school: School::Evocation,
                 attack_kind: Some(AttackKind::Save {
-                    ability: Ability::Dexterity,
+                    ability: ability::Identifier::Dexterity,
                 }),
                 effect: Effect::Fire,
                 description: "EXPLOSION!!!".into(),

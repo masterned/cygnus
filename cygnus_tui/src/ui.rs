@@ -1,4 +1,4 @@
-use cygnus_models::{ability::Ability, character::Character};
+use cygnus_models::{ability, character::Character};
 use ratatui::{
     prelude::*,
     widgets::{
@@ -9,7 +9,7 @@ use ratatui::{
 
 use crate::app::App;
 
-fn ability_widget(character: &Character, ability: Ability) -> Paragraph {
+fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragraph {
     let modifier = character.get_ability_modifier(ability);
     Paragraph::new(format!("{modifier:+}"))
         .alignment(Alignment::Center)
@@ -29,7 +29,7 @@ fn ability_widget(character: &Character, ability: Ability) -> Paragraph {
 fn render_ability_widget<B: Backend>(
     frame: &mut Frame<'_, B>,
     character: &Character,
-    ability: Ability,
+    ability: ability::Identifier,
     rect: Rect,
 ) {
     let ability = ability_widget(character, ability);
@@ -43,9 +43,12 @@ fn render_abilities<B: Backend>(frame: &mut Frame<'_, B>, character: &Character,
         .constraints([Constraint::Ratio(1, 6); 6])
         .split(rect);
 
-    Ability::all().iter().enumerate().for_each(|(i, &ability)| {
-        render_ability_widget(frame, character, ability, abilities_layout[i])
-    });
+    ability::Identifier::all()
+        .iter()
+        .enumerate()
+        .for_each(|(i, &ability)| {
+            render_ability_widget(frame, character, ability, abilities_layout[i])
+        });
 }
 
 fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
@@ -121,7 +124,7 @@ fn render_health_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
 fn render_saving_throw_pair<B: Backend>(
     frame: &mut Frame<'_, B>,
     character: &Character,
-    ability: Ability,
+    ability: ability::Identifier,
     rect: Rect,
 ) {
     let saving_throw_pair_layout = Layout::default()
@@ -145,8 +148,8 @@ fn render_saving_throw_pair<B: Backend>(
 fn render_saving_throw_row<B: Backend>(
     frame: &mut Frame<'_, B>,
     character: &Character,
-    ability_left: Ability,
-    ability_right: Ability,
+    ability_left: ability::Identifier,
+    ability_right: ability::Identifier,
     rect: Rect,
 ) {
     let saving_throw_row_layout = Layout::default()
@@ -179,9 +182,12 @@ fn render_saving_throws_block<B: Backend>(
         .constraints([Constraint::Ratio(1, 3); 3])
         .split(saving_throws_block.inner(rect));
 
-    Ability::all().chunks(2).enumerate().for_each(|(i, pair)| {
-        render_saving_throw_row(frame, character, pair[0], pair[1], saving_throw_rows[i])
-    });
+    ability::Identifier::all()
+        .chunks(2)
+        .enumerate()
+        .for_each(|(i, pair)| {
+            render_saving_throw_row(frame, character, pair[0], pair[1], saving_throw_rows[i])
+        });
 }
 
 fn render_armor_class<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {

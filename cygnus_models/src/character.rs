@@ -1,7 +1,7 @@
 use std::{error, fmt};
 
 use crate::{
-    ability::{Abilities, Ability},
+    ability::{self, Abilities},
     class::{Class, Classes},
     feat::Feat,
     item::{self, Item, Items},
@@ -54,7 +54,7 @@ pub struct Builder {
     gender: Option<Gender>,
     personality: Option<Personality>,
     race: Option<Race>,
-    ability_scores: Option<Abilities>,
+    base_ability_scores: Option<Abilities>,
     classes: Option<Classes>,
     skill_proficiencies: Option<Skills>,
     inventory: Option<Items>,
@@ -106,8 +106,11 @@ impl Builder {
         Ok(self)
     }
 
-    pub fn ability_scores(mut self, ability_scores: Abilities) -> Result<Self, ConstructionError> {
-        let _ = self.ability_scores.insert(ability_scores);
+    pub fn base_ability_scores(
+        mut self,
+        ability_scores: Abilities,
+    ) -> Result<Self, ConstructionError> {
+        let _ = self.base_ability_scores.insert(ability_scores);
 
         Ok(self)
     }
@@ -187,8 +190,8 @@ impl Builder {
             .race
             .ok_or(ConstructionError::MissingField("race".into()))?;
 
-        let ability_scores = self
-            .ability_scores
+        let base_ability_scores = self
+            .base_ability_scores
             .ok_or(ConstructionError::MissingField("ability scores".into()))?;
 
         let classes = self
@@ -207,7 +210,7 @@ impl Builder {
             gender: self.gender,
             personality,
             race,
-            ability_scores,
+            base_ability_scores,
             classes,
             skill_proficiencies,
             inventory,
@@ -244,7 +247,7 @@ pub struct Character {
     gender: Option<Gender>,
     personality: Personality,
     race: Race,
-    ability_scores: Abilities,
+    base_ability_scores: Abilities,
     classes: Classes,
     skill_proficiencies: Skills,
     inventory: Items,
@@ -291,18 +294,20 @@ impl Character {
 
     #[must_use]
     pub fn get_hit_points_max(&self) -> usize {
-        self.classes
-            .get_hit_points(self.get_ability_modifier(Ability::Constitution))
+        let constitution_modifier = self.get_ability_modifier(ability::Identifier::Constitution);
+
+        self.classes.get_hit_points(constitution_modifier)
     }
 
     #[must_use]
     pub fn get_initiative(&self) -> isize {
-        self.get_ability_modifier(Ability::Dexterity)
+        self.get_ability_modifier(ability::Identifier::Dexterity)
     }
 
     #[must_use]
     pub fn get_armor_class(&self) -> usize {
-        let dex_mod = self.get_ability_modifier(Ability::Dexterity);
+        let dex_mod = self.get_ability_modifier(ability::Identifier::Dexterity);
+
         self.equipment
             .get_equipped_items()
             .iter()
@@ -346,17 +351,17 @@ impl Character {
         walking_speed
     }
 
+    pub fn get_abilities(&self) -> Abilities {
+        self.base_ability_scores.clone() + self.race.get_abilities().clone()
+    }
+
     #[must_use]
-    pub fn get_ability_score(&self, ability: Ability) -> usize {
+    pub fn get_ability_score(&self, ability: ability::Identifier) -> usize {
         self.get_abilities().get_score(ability).unwrap_or(0)
     }
 
-    pub fn get_abilities(&self) -> Abilities {
-        self.ability_scores + *self.race.get_abilities()
-    }
-
     #[must_use]
-    pub fn get_ability_modifier(&self, ability: Ability) -> isize {
+    pub fn get_ability_modifier(&self, ability: ability::Identifier) -> isize {
         self.get_abilities().get_modifier(ability).unwrap_or(0)
     }
 
@@ -371,12 +376,15 @@ impl Character {
     }
 
     #[must_use]
-    pub fn get_saving_throw_proficiency(&self, ability: Ability) -> Option<&Proficiency> {
+    pub fn get_saving_throw_proficiency(
+        &self,
+        ability: ability::Identifier,
+    ) -> Option<&Proficiency> {
         self.classes.get_saving_throw_proficiency(ability)
     }
 
     #[must_use]
-    pub fn get_saving_throw_mod(&self, ability: Ability) -> isize {
+    pub fn get_saving_throw_mod(&self, ability: ability::Identifier) -> isize {
         self.get_proficiency_bonus() as isize
             * (self
                 .get_saving_throw_proficiency(ability)
@@ -391,7 +399,7 @@ impl Character {
     #[must_use]
     pub fn get_variant_encumbrance(&self) -> Option<Encumbrance> {
         let total_weight_carried = self.get_total_weight_carried();
-        let strength_score = self.get_ability_score(Ability::Strength);
+        let strength_score = self.get_ability_score(ability::Identifier::Strength);
 
         if total_weight_carried > (10 * strength_score) {
             Some(Encumbrance::HeavilyEncumbered)
@@ -516,13 +524,13 @@ mod tests {
                 name: "Dummy".into(),
                 alignment: (Conformity::Neutral, Morality::Neutral),
                 gender: None,
-                ability_scores: Abilities::from(AbilitiesTemplate {
-                    strength: Some(8),
-                    dexterity: Some(8),
-                    constitution: Some(8),
-                    intelligence: Some(8),
-                    wisdom: Some(8),
-                    charisma: Some(8),
+                base_ability_scores: Abilities::from(AbilitiesTemplate {
+                    strength: 8,
+                    dexterity: 8,
+                    constitution: 8,
+                    intelligence: 8,
+                    wisdom: 8,
+                    charisma: 8,
                 }),
                 race: Race::human(),
                 classes: Classes::default(),
@@ -547,7 +555,10 @@ mod tests {
     fn _should_get_saving_throw_mod_without_proficiency() {
         let character = Character::dummy();
 
-        assert_eq!(character.get_saving_throw_mod(Ability::Strength), -1);
+        assert_eq!(
+            character.get_saving_throw_mod(ability::Identifier::Strength),
+            -1
+        );
     }
 
     #[test]
@@ -555,7 +566,10 @@ mod tests {
         let mut character = Character::dummy();
         character.add_class(Class::artificer());
 
-        assert_eq!(character.get_saving_throw_mod(Ability::Constitution), 1);
+        assert_eq!(
+            character.get_saving_throw_mod(ability::Identifier::Constitution),
+            1
+        );
     }
 
     #[test]
