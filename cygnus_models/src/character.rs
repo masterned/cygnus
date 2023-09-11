@@ -8,6 +8,7 @@ use crate::{
     modifiers::{Encumbrance, Proficiency},
     personality::Personality,
     race::{CreatureType, Race, Size},
+    senses::Senses,
     skill::{Skill, Skills},
     slot::{ItemSlots, Slot, SlotsError},
 };
@@ -59,6 +60,7 @@ pub struct Builder {
     skill_proficiencies: Option<Skills>,
     inventory: Option<Items>,
     equipment: Option<ItemSlots>,
+    senses: Option<Senses>,
 }
 
 impl Builder {
@@ -175,6 +177,12 @@ impl Builder {
         Ok(self)
     }
 
+    pub fn senses(mut self, senses: Senses) -> Result<Self, ConstructionError> {
+        let _ = self.senses.insert(senses);
+
+        Ok(self)
+    }
+
     pub fn build(self) -> Result<Character, ConstructionError> {
         let name = self
             .name
@@ -204,6 +212,8 @@ impl Builder {
 
         let equipment = self.equipment.unwrap_or_default();
 
+        let senses = self.senses.unwrap_or_default();
+
         Ok(Character {
             name,
             alignment,
@@ -217,6 +227,7 @@ impl Builder {
             equipment,
             exhaustion_level: 0,
             damage: 0,
+            senses,
         })
     }
 }
@@ -254,6 +265,7 @@ pub struct Character {
     equipment: ItemSlots,
     exhaustion_level: usize,
     damage: usize,
+    senses: Senses,
 }
 
 impl Character {
@@ -439,17 +451,24 @@ impl Character {
 
     #[must_use]
     pub fn get_passive_perception(&self) -> usize {
-        (10 + self.get_skill_modifier(Skill::Perception)) as usize
+        self.senses
+            .get_passive_perception(self.get_skill_modifier(Skill::Perception))
     }
 
     #[must_use]
     pub fn get_passive_investigation(&self) -> usize {
-        (10 + self.get_skill_modifier(Skill::Investigation)) as usize
+        self.senses
+            .get_passive_perception(self.get_skill_modifier(Skill::Investigation))
     }
 
     #[must_use]
     pub fn get_passive_insight(&self) -> usize {
-        (10 + self.get_skill_modifier(Skill::Insight)) as usize
+        self.senses
+            .get_passive_insight(self.get_skill_modifier(Skill::Insight))
+    }
+
+    pub fn get_darkvision(&self) -> Option<usize> {
+        self.senses.get_darkvision()
     }
 
     pub fn add_class(&mut self, class: Class) {
@@ -544,6 +563,7 @@ mod tests {
                 exhaustion_level: 0,
                 damage: 0,
                 equipment: ItemSlots::default(),
+                senses: Senses::default(),
             }
         }
     }

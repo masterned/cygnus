@@ -6,7 +6,7 @@ use cygnus_models::{
     class::{self, HPIncreases},
     item::{self, ArmorClass},
     personality::Personality,
-    race,
+    race, senses,
     skill::Skill,
     slot::Slot,
 };
@@ -56,6 +56,8 @@ impl App {
             .add_saving_throw_proficiency(ability::Identifier::Constitution)?
             .build()?;
 
+        let senses = senses::Builder::new().darkvision(60).build();
+
         let mut character = character::Builder::new()
             .name("𝛴𝜄𝛾𝜈𝜐𝜍")?
             .alignment(Conformity::Lawful, Morality::Neutral)?
@@ -79,6 +81,7 @@ impl App {
             .add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")))?
             .add_equipment_slot("cloak", Slot::new(|item| item.has_type("cloak")))?
             .add_equipment_slot("left hand", Slot::new(|item| item.has_type("hand")))?
+            .senses(senses)?
             .build()?;
 
         let mithral_plate = item::Builder::new()

@@ -7,6 +7,7 @@ pub mod item;
 pub mod modifiers;
 pub mod personality;
 pub mod race;
+pub mod senses;
 pub mod skill;
 pub mod slot;
 pub mod spell;

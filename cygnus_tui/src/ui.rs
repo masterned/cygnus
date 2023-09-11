@@ -417,6 +417,13 @@ fn render_senses_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
         Paragraph::new("Passive WIS (Insight)"),
         passive_insight_row_layout[1],
     );
+
+    if let Some(darkvision) = character.get_darkvision() {
+        frame.render_widget(
+            Paragraph::new(format!("Darkvision {} ft.", darkvision)).alignment(Alignment::Center),
+            senses_layout[3],
+        );
+    }
 }
 
 /// Renders the user interface widgets.
