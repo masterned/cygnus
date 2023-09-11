@@ -348,11 +348,75 @@ fn render_rolls_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Characte
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50); 2])
         .split(area);
+
     let left_column_layout = Layout::new()
-        .constraints([Constraint::Ratio(1, 3); 3])
+        .constraints([
+            Constraint::Ratio(1, 4),
+            Constraint::Ratio(1, 4),
+            Constraint::Ratio(1, 2),
+        ])
         .split(twin_layout[0]);
     render_saving_throws_block(frame, character, left_column_layout[0]);
+    render_senses_block(frame, character, left_column_layout[1]);
+
     render_skills_table(frame, character, twin_layout[1]);
+}
+
+fn render_senses_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
+    let senses_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title(
+            Title::from("Senses")
+                .alignment(Alignment::Center)
+                .position(Position::Bottom),
+        );
+    frame.render_widget(senses_block.clone(), area);
+
+    let senses_layout = Layout::new()
+        .constraints([Constraint::Ratio(1, 4); 4])
+        .split(senses_block.inner(area));
+
+    let passive_perception_row_layout = Layout::new()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 3), Constraint::Min(0)])
+        .split(senses_layout[0]);
+    frame.render_widget(
+        Paragraph::new(format!("{}", character.get_passive_perception()))
+            .alignment(Alignment::Center),
+        passive_perception_row_layout[0],
+    );
+    frame.render_widget(
+        Paragraph::new("Passive WIS (Perception)"),
+        passive_perception_row_layout[1],
+    );
+
+    let passive_investigation_row_layout = Layout::new()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 3), Constraint::Min(0)])
+        .split(senses_layout[1]);
+    frame.render_widget(
+        Paragraph::new(format!("{}", character.get_passive_investigation()))
+            .alignment(Alignment::Center),
+        passive_investigation_row_layout[0],
+    );
+    frame.render_widget(
+        Paragraph::new("Passive INT (Investigation)"),
+        passive_investigation_row_layout[1],
+    );
+
+    let passive_insight_row_layout = Layout::new()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 3), Constraint::Min(0)])
+        .split(senses_layout[2]);
+    frame.render_widget(
+        Paragraph::new(format!("{}", character.get_passive_insight())).alignment(Alignment::Center),
+        passive_insight_row_layout[0],
+    );
+    frame.render_widget(
+        Paragraph::new("Passive WIS (Insight)"),
+        passive_insight_row_layout[1],
+    );
 }
 
 /// Renders the user interface widgets.
