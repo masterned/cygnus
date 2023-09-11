@@ -51,7 +51,16 @@ fn render_abilities<B: Backend>(frame: &mut Frame<'_, B>, character: &Character,
         });
 }
 
-fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
+fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
+    let header_layout = Layout::new()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Ratio(2, 5),
+            Constraint::Ratio(1, 5),
+            Constraint::Ratio(2, 5),
+        ])
+        .split(area);
+
     let header_widget = Paragraph::new(format!(
         "{}\n{} {} {}\nLevel {}",
         character.get_name(),
@@ -62,9 +71,15 @@ fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, re
         character.get_race_name(),
         character.get_class_details(),
         character.get_level()
-    ));
+    ))
+    .block(
+        Block::new()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded),
+    );
 
-    frame.render_widget(header_widget, rect);
+    frame.render_widget(header_widget, header_layout[0]);
+    render_health_block(frame, character, header_layout[2]);
 }
 
 fn render_health_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
@@ -277,11 +292,7 @@ fn render_walking_speed<B: Backend>(frame: &mut Frame<'_, B>, character: &Charac
     frame.render_widget(walking_speed, area);
 }
 
-pub fn render_skills_table<B: Backend>(
-    frame: &mut Frame<'_, B>,
-    character: &Character,
-    area: Rect,
-) {
+fn render_skills_table<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
     let header_cells = ["Prof", "Mod", "Skill", "Bonus"]
         .iter()
         .map(|&h| Cell::from(h));
@@ -320,6 +331,30 @@ pub fn render_skills_table<B: Backend>(
     frame.render_widget(table, area);
 }
 
+fn render_first_row<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
+    let first_row_layout = Layout::new()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 4); 4])
+        .split(area);
+
+    render_proficiency_bonus(frame, character, first_row_layout[0]);
+    render_walking_speed(frame, character, first_row_layout[1]);
+    render_initiative(frame, character, first_row_layout[2]);
+    render_armor_class(frame, character, first_row_layout[3]);
+}
+
+fn render_rolls_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
+    let twin_layout = Layout::new()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50); 2])
+        .split(area);
+    let left_column_layout = Layout::new()
+        .constraints([Constraint::Ratio(1, 3); 3])
+        .split(twin_layout[0]);
+    render_saving_throws_block(frame, character, left_column_layout[0]);
+    render_skills_table(frame, character, twin_layout[1]);
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -335,30 +370,15 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
+            Constraint::Ratio(1, 10),
             Constraint::Ratio(1, 16),
             Constraint::Ratio(1, 16),
-            Constraint::Ratio(1, 8),
-            Constraint::Ratio(1, 8),
-            Constraint::Ratio(1, 16),
-            Constraint::Ratio(1, 2),
             Constraint::Min(0),
         ])
         .split(frame.size());
 
     render_header(frame, character_ref, layout[0]);
-    render_abilities(frame, character_ref, layout[1]);
-    render_health_block(frame, character_ref, layout[2]);
-    render_saving_throws_block(frame, character_ref, layout[3]);
-
-    let stat_row_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Ratio(1, 4); 4])
-        .split(layout[4]);
-
-    render_proficiency_bonus(frame, character_ref, stat_row_layout[0]);
-    render_walking_speed(frame, character_ref, stat_row_layout[1]);
-    render_initiative(frame, character_ref, stat_row_layout[2]);
-    render_armor_class(frame, character_ref, stat_row_layout[3]);
-
-    render_skills_table(frame, character_ref, layout[5]);
+    render_first_row(frame, character_ref, layout[1]);
+    render_abilities(frame, character_ref, layout[2]);
+    render_rolls_block(frame, character_ref, layout[3]);
 }
