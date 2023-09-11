@@ -3,7 +3,7 @@ use ratatui::{
     prelude::*,
     widgets::{
         block::{Position, Title},
-        Block, BorderType, Borders, Cell, Paragraph, Row, Table,
+        Block, BorderType, Borders, Cell, Paragraph, Row, Table, Wrap,
     },
 };
 
@@ -358,6 +358,7 @@ fn render_rolls_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Characte
         .split(twin_layout[0]);
     render_saving_throws_block(frame, character, left_column_layout[0]);
     render_senses_block(frame, character, left_column_layout[1]);
+    render_proficiencies_and_languages_block(frame, character, left_column_layout[2]);
 
     render_skills_table(frame, character, twin_layout[1]);
 }
@@ -424,6 +425,71 @@ fn render_senses_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
             senses_layout[3],
         );
     }
+}
+
+fn render_proficiencies_and_languages_block<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    area: Rect,
+) {
+    let block = Block::new()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title(
+            Title::from("Proficiencies & Languages")
+                .alignment(Alignment::Center)
+                .position(Position::Bottom),
+        );
+    frame.render_widget(block.clone(), area);
+
+    let layout = Layout::new()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Ratio(1, 4); 4])
+        .split(block.inner(area));
+
+    frame.render_widget(
+        Paragraph::new(character.get_armor_proficiencies_string())
+            .block(
+                Block::new()
+                    .title(Title::from("Armor Proficiencies"))
+                    .title_style(Style::default().add_modifier(Modifier::BOLD)),
+            )
+            .wrap(Wrap { trim: true }),
+        layout[0],
+    );
+
+    frame.render_widget(
+        Paragraph::new(character.get_weapon_proficiencies_string())
+            .block(
+                Block::new()
+                    .title(Title::from("Weapon Proficiencies"))
+                    .title_style(Style::default().add_modifier(Modifier::BOLD)),
+            )
+            .wrap(Wrap { trim: true }),
+        layout[1],
+    );
+
+    frame.render_widget(
+        Paragraph::new(character.get_tool_proficiencies_string())
+            .block(
+                Block::new()
+                    .title(Title::from("Tool Proficiencies"))
+                    .title_style(Style::default().add_modifier(Modifier::BOLD)),
+            )
+            .wrap(Wrap { trim: true }),
+        layout[2],
+    );
+
+    frame.render_widget(
+        Paragraph::new(character.get_languages_string())
+            .block(
+                Block::new()
+                    .title(Title::from("Languages"))
+                    .title_style(Style::default().add_modifier(Modifier::BOLD)),
+            )
+            .wrap(Wrap { trim: true }),
+        layout[3],
+    );
 }
 
 /// Renders the user interface widgets.

@@ -7,6 +7,7 @@ use crate::{
     item::{self, Item, Items},
     modifiers::{Encumbrance, Proficiency},
     personality::Personality,
+    proficiencies::Proficiencies,
     race::{CreatureType, Race, Size},
     senses::Senses,
     skill::{Skill, Skills},
@@ -61,6 +62,7 @@ pub struct Builder {
     inventory: Option<Items>,
     equipment: Option<ItemSlots>,
     senses: Option<Senses>,
+    proficiencies: Option<Proficiencies>,
 }
 
 impl Builder {
@@ -183,6 +185,39 @@ impl Builder {
         Ok(self)
     }
 
+    pub fn add_armor_proficiency(
+        mut self,
+        armor_class: impl Into<String>,
+    ) -> Result<Self, ConstructionError> {
+        let proficiencies = self.proficiencies.get_or_insert_with(Default::default);
+
+        proficiencies.add_armor_proficiency(armor_class);
+
+        Ok(self)
+    }
+
+    pub fn add_weapon_proficiency(
+        mut self,
+        weapon: impl Into<String>,
+    ) -> Result<Self, ConstructionError> {
+        let proficiencies = self.proficiencies.get_or_insert_with(Default::default);
+
+        proficiencies.add_weapon_proficiency(weapon);
+
+        Ok(self)
+    }
+
+    pub fn add_tool_proficiency(
+        mut self,
+        tool: impl Into<String>,
+    ) -> Result<Self, ConstructionError> {
+        let proficiencies = self.proficiencies.get_or_insert_with(Default::default);
+
+        proficiencies.add_tool_proficiency(tool);
+
+        Ok(self)
+    }
+
     pub fn build(self) -> Result<Character, ConstructionError> {
         let name = self
             .name
@@ -214,6 +249,8 @@ impl Builder {
 
         let senses = self.senses.unwrap_or_default();
 
+        let proficiencies = self.proficiencies.unwrap_or_default();
+
         Ok(Character {
             name,
             alignment,
@@ -228,6 +265,7 @@ impl Builder {
             exhaustion_level: 0,
             damage: 0,
             senses,
+            proficiencies,
         })
     }
 }
@@ -266,6 +304,7 @@ pub struct Character {
     exhaustion_level: usize,
     damage: usize,
     senses: Senses,
+    proficiencies: Proficiencies,
 }
 
 impl Character {
@@ -497,6 +536,35 @@ impl Character {
     pub fn get_feats(&self) -> Vec<&Feat> {
         [self.classes.get_feats(), self.race.get_feats()].concat()
     }
+
+    pub fn get_armor_proficiencies_string(&self) -> String {
+        self.proficiencies.get_armor_proficiencies_string()
+    }
+
+    pub fn get_weapon_proficiencies_string(&self) -> String {
+        self.proficiencies.get_weapon_proficiencies_string()
+    }
+
+    pub fn get_tool_proficiencies_string(&self) -> String {
+        self.proficiencies.get_tool_proficiencies_string()
+    }
+
+    pub fn get_languages_string(&self) -> String {
+        let languages: Vec<String> = self
+            .proficiencies
+            .get_languages()
+            .iter()
+            .map(|lang| lang.to_string())
+            .chain(
+                self.race
+                    .get_languages()
+                    .iter()
+                    .map(|lang| lang.to_string()),
+            )
+            .collect();
+
+        languages.join(", ")
+    }
 }
 
 type CharacterResult<T> = Result<T, Error>;
@@ -564,6 +632,7 @@ mod tests {
                 damage: 0,
                 equipment: ItemSlots::default(),
                 senses: Senses::default(),
+                proficiencies: Proficiencies::default(),
             }
         }
     }

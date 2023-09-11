@@ -6,7 +6,8 @@ use cygnus_models::{
     class::{self, HPIncreases},
     item::{self, ArmorClass},
     personality::Personality,
-    race, senses,
+    race::{self, Language},
+    senses,
     skill::Skill,
     slot::Slot,
 };
@@ -44,6 +45,8 @@ impl App {
             .name("Haskellian")
             .add_ability(ability::Identifier::Intelligence, 2)
             .add_ability(ability::Identifier::Dexterity, 1)
+            .add_language(Language::Common)
+            .add_language(Language::Undercommon)
             .build()?;
 
         let hp_increases = HPIncreases::try_from(vec![8, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5])?;
@@ -82,6 +85,20 @@ impl App {
             .add_equipment_slot("cloak", Slot::new(|item| item.has_type("cloak")))?
             .add_equipment_slot("left hand", Slot::new(|item| item.has_type("hand")))?
             .senses(senses)?
+            .add_armor_proficiency("Heavy Armor")?
+            .add_armor_proficiency("Light Armor")?
+            .add_armor_proficiency("Medium Armor")?
+            .add_armor_proficiency("Shields")?
+            .add_weapon_proficiency("Firearms")?
+            .add_weapon_proficiency("Rapier")?
+            .add_weapon_proficiency("Simple Weapons")?
+            .add_weapon_proficiency("Whip")?
+            .add_tool_proficiency("Alchemist's Supplies")?
+            .add_tool_proficiency("Playing Card Set")?
+            .add_tool_proficiency("Smith's Tools")?
+            .add_tool_proficiency("Thieves' Tools")?
+            .add_tool_proficiency("Three-Dragon Ante Set")?
+            .add_tool_proficiency("Tinker's Tools")?
             .build()?;
 
         let mithral_plate = item::Builder::new()

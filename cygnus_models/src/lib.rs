@@ -6,6 +6,7 @@ pub mod feat;
 pub mod item;
 pub mod modifiers;
 pub mod personality;
+pub mod proficiencies;
 pub mod race;
 pub mod senses;
 pub mod skill;

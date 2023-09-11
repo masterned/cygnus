@@ -57,6 +57,19 @@ pub enum Language {
     Undercommon,
 }
 
+impl fmt::Display for Language {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Language::Common => "Common",
+                Language::Undercommon => "Undercommon",
+            }
+        )
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Builder {
     name: Option<String>,
