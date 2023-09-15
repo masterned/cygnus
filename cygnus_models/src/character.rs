@@ -10,7 +10,7 @@ use crate::{
     proficiencies::Proficiencies,
     race::{CreatureType, Race, Size},
     senses::Senses,
-    skill::{Skill, Skills},
+    skill::{self, Skills},
     slot::{ItemSlots, Slot, SlotsError},
 };
 
@@ -127,7 +127,10 @@ impl Builder {
         Ok(self)
     }
 
-    pub fn add_skill_proficiency(mut self, skill: Skill) -> Result<Self, ConstructionError> {
+    pub fn add_skill_proficiency(
+        mut self,
+        skill: skill::Identifier,
+    ) -> Result<Self, ConstructionError> {
         let skills = self
             .skill_proficiencies
             .get_or_insert_with(Default::default);
@@ -137,7 +140,10 @@ impl Builder {
         Ok(self)
     }
 
-    pub fn add_skill_expertise(mut self, skill: Skill) -> Result<Self, ConstructionError> {
+    pub fn add_skill_expertise(
+        mut self,
+        skill: skill::Identifier,
+    ) -> Result<Self, ConstructionError> {
         let skills = self
             .skill_proficiencies
             .get_or_insert_with(Default::default);
@@ -259,7 +265,7 @@ impl Builder {
             race,
             base_ability_scores,
             classes,
-            skill_proficiencies,
+            skills: skill_proficiencies,
             inventory,
             equipment,
             exhaustion_level: 0,
@@ -298,7 +304,7 @@ pub struct Character {
     race: Race,
     base_ability_scores: Abilities,
     classes: Classes,
-    skill_proficiencies: Skills,
+    skills: Skills,
     inventory: Items,
     equipment: ItemSlots,
     exhaustion_level: usize,
@@ -474,36 +480,35 @@ impl Character {
         self.exhaustion_level = new_level;
     }
 
-    pub fn get_skill_proficiency(&self, skill: Skill) -> Option<Proficiency> {
-        self.skill_proficiencies.get_proficiency(skill)
+    pub fn get_skill_proficiency(&self, skill: skill::Identifier) -> Option<Proficiency> {
+        self.skills.get_proficiency(skill)
     }
 
     #[must_use]
-    pub fn get_skill_modifier(&self, skill: Skill) -> isize {
-        self.get_ability_modifier(skill.get_ability())
-            + (match self.get_skill_proficiency(skill) {
-                Some(Proficiency::Proficiency) => self.get_proficiency_bonus(),
-                Some(Proficiency::Expertise) => self.get_proficiency_bonus() * 2,
-                None => 0,
-            }) as isize
+    pub fn get_skill_modifier(&self, skill: skill::Identifier) -> isize {
+        self.skills.get_modifier(
+            skill,
+            self.get_ability_modifier(skill.get_default_ability()),
+            self.get_proficiency_bonus(),
+        )
     }
 
     #[must_use]
     pub fn get_passive_perception(&self) -> usize {
         self.senses
-            .get_passive_perception(self.get_skill_modifier(Skill::Perception))
+            .get_passive_perception(self.get_skill_modifier(skill::Identifier::Perception))
     }
 
     #[must_use]
     pub fn get_passive_investigation(&self) -> usize {
         self.senses
-            .get_passive_perception(self.get_skill_modifier(Skill::Investigation))
+            .get_passive_perception(self.get_skill_modifier(skill::Identifier::Investigation))
     }
 
     #[must_use]
     pub fn get_passive_insight(&self) -> usize {
         self.senses
-            .get_passive_insight(self.get_skill_modifier(Skill::Insight))
+            .get_passive_insight(self.get_skill_modifier(skill::Identifier::Insight))
     }
 
     pub fn get_darkvision(&self) -> Option<usize> {
@@ -626,7 +631,7 @@ mod tests {
                 race: Race::human(),
                 classes: Classes::default(),
                 personality: Personality::default(),
-                skill_proficiencies: Skills::default(),
+                skills: Skills::default(),
                 inventory: Items::default(),
                 exhaustion_level: 0,
                 damage: 0,
@@ -793,29 +798,37 @@ mod tests {
     fn _skill_modifier_should_default_to_related_ability_modifier() {
         let character = Character::dummy();
 
-        assert_eq!(character.get_skill_modifier(Skill::Arcana), -1);
+        assert_eq!(character.get_skill_modifier(skill::Identifier::Arcana), -1);
     }
 
     #[test]
     fn _proficiency_should_affect_skill_modifier() {
         let mut character = Character::dummy();
-        character.add_class(Class::wizard());
-        character
-            .skill_proficiencies
-            .set_proficiency(Skill::Arcana, Some(Proficiency::Proficiency));
 
-        assert_eq!(character.get_skill_modifier(Skill::Arcana), 1);
+        let mut class = Class::wizard();
+        class.set_level(1).unwrap();
+        character.add_class(class);
+
+        character
+            .skills
+            .set_proficiency(skill::Identifier::Arcana, Some(Proficiency::Proficiency));
+
+        assert_eq!(character.get_skill_modifier(skill::Identifier::Arcana), 1);
     }
 
     #[test]
     fn _expertise_should_affect_skill_modifier() {
         let mut character = Character::dummy();
-        character.add_class(Class::wizard());
-        character
-            .skill_proficiencies
-            .set_proficiency(Skill::Arcana, Some(Proficiency::Expertise));
 
-        assert_eq!(character.get_skill_modifier(Skill::Arcana), 3);
+        let mut class = Class::wizard();
+        class.set_level(1).unwrap();
+
+        character.add_class(class);
+        character
+            .skills
+            .set_proficiency(skill::Identifier::Arcana, Some(Proficiency::Expertise));
+
+        assert_eq!(character.get_skill_modifier(skill::Identifier::Arcana), 3);
     }
 
     #[test]
@@ -825,9 +838,10 @@ mod tests {
 
         assert_eq!(character.get_passive_perception(), 9);
 
-        character
-            .skill_proficiencies
-            .set_proficiency(Skill::Perception, Some(Proficiency::Proficiency));
+        character.skills.set_proficiency(
+            skill::Identifier::Perception,
+            Some(Proficiency::Proficiency),
+        );
         assert_eq!(character.get_passive_perception(), 11);
     }
 
@@ -838,9 +852,10 @@ mod tests {
 
         assert_eq!(character.get_passive_investigation(), 9);
 
-        character
-            .skill_proficiencies
-            .set_proficiency(Skill::Investigation, Some(Proficiency::Proficiency));
+        character.skills.set_proficiency(
+            skill::Identifier::Investigation,
+            Some(Proficiency::Proficiency),
+        );
         assert_eq!(character.get_passive_investigation(), 11);
     }
 
@@ -852,8 +867,8 @@ mod tests {
         assert_eq!(character.get_passive_insight(), 9);
 
         character
-            .skill_proficiencies
-            .set_proficiency(Skill::Insight, Some(Proficiency::Proficiency));
+            .skills
+            .set_proficiency(skill::Identifier::Insight, Some(Proficiency::Proficiency));
         assert_eq!(character.get_passive_insight(), 11);
     }
 
