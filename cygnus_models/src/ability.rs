@@ -123,7 +123,7 @@ impl From<AbilitiesTemplate> for Abilities {
             (Identifier::Strength, value.strength.into()),
             (Identifier::Dexterity, value.dexterity.into()),
             (Identifier::Constitution, value.constitution.into()),
-            (Identifier::Intelligence, value.constitution.into()),
+            (Identifier::Intelligence, value.intelligence.into()),
             (Identifier::Wisdom, value.wisdom.into()),
             (Identifier::Charisma, value.charisma.into()),
         ]))
