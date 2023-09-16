@@ -1,4 +1,4 @@
-use cygnus_models::{ability, character::Character, modifiers::Proficiency, skill};
+use cygnus_models::{ability, character::Character, modifiers::Proficiency, skills};
 use ratatui::{
     prelude::*,
     widgets::{
@@ -297,7 +297,7 @@ fn render_skills_table<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
         .iter()
         .map(|&h| Cell::from(h));
     let header = Row::new(header_cells).height(1).bottom_margin(1);
-    let skills = skill::Identifier::all();
+    let skills = skills::Identifier::all();
     let rows = skills.iter().map(|&id| {
         let cells = [
             Cell::from(format!(

@@ -7,7 +7,7 @@ use cygnus_models::{
     item::{self, ArmorClass},
     personality::Personality,
     race::{self, Language},
-    senses, skill,
+    senses, skills,
     slot::Slot,
 };
 
@@ -75,11 +75,11 @@ impl App {
                 charisma: 10,
             }))?
             .add_class(artificer)?
-            .add_skill_proficiency(skill::Identifier::Arcana)?
-            .add_skill_proficiency(skill::Identifier::Insight)?
-            .add_skill_proficiency(skill::Identifier::Investigation)?
-            .add_skill_proficiency(skill::Identifier::Perception)?
-            .add_skill_proficiency(skill::Identifier::Stealth)?
+            .add_skill_proficiency(skills::Identifier::Arcana)?
+            .add_skill_proficiency(skills::Identifier::Insight)?
+            .add_skill_proficiency(skills::Identifier::Investigation)?
+            .add_skill_proficiency(skills::Identifier::Perception)?
+            .add_skill_proficiency(skills::Identifier::Stealth)?
             .add_equipment_slot("armor", Slot::new(|item| item.has_type("armor")))?
             .add_equipment_slot("cloak", Slot::new(|item| item.has_type("cloak")))?
             .add_equipment_slot("left hand", Slot::new(|item| item.has_type("hand")))?
