@@ -4,7 +4,4 @@ members = [
   "cygnus_tui",
   "cygnus_utils"
 ]
-
-default_members = [
-  "cygnus_tui"
-]
+resolver = "2"
