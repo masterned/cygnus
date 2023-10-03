@@ -50,15 +50,20 @@ fn render_abilities<B: Backend>(frame: &mut Frame<'_, B>, character: &Character,
 
 fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
     let header_layout = Layout::new()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Ratio(1, 2); 2].as_ref())
+        .split(area);
+
+    let first_row_layout = Layout::new()
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Ratio(2, 5),
             Constraint::Ratio(1, 5),
             Constraint::Ratio(2, 5),
         ])
-        .split(area);
+        .split(header_layout[0]);
 
-    let header_widget = Paragraph::new(format!(
+    let name_card_widget = Paragraph::new(format!(
         "{}\n{} {} {}\nLevel {}",
         character.get_name(),
         character
@@ -75,8 +80,11 @@ fn render_header<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, ar
             .border_type(BorderType::Rounded),
     );
 
-    frame.render_widget(header_widget, header_layout[0]);
-    render_health_block(frame, character, header_layout[2]);
+    // header first row
+    frame.render_widget(name_card_widget, first_row_layout[0]);
+    render_health_block(frame, character, first_row_layout[2]);
+
+    render_second_row(frame, character, header_layout[1]);
 }
 
 fn render_health_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, rect: Rect) {
@@ -297,15 +305,12 @@ fn render_skills_table<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
     let skills = skills::Identifier::all();
     let rows = skills.iter().map(|&id| {
         let cells = [
-            Cell::from(format!(
-                "{}",
-                match character.get_skill_proficiency(id) {
-                    Some(Proficiency::Proficiency) => "x",
-                    Some(Proficiency::Expertise) => "*",
-                    None => "o",
-                }
-            )),
-            Cell::from(format!("{}", id.get_default_ability().abbr())),
+            Cell::from(match character.get_skill_proficiency(id) {
+                Some(Proficiency::Proficiency) => "x",
+                Some(Proficiency::Expertise) => "*",
+                None => "o",
+            }),
+            Cell::from(id.get_default_ability().abbr().to_string()),
             Cell::from(format!("{id}")),
             Cell::from(format!("{:+}", character.get_skill_modifier(id))),
         ];
@@ -328,36 +333,16 @@ fn render_skills_table<B: Backend>(frame: &mut Frame<'_, B>, character: &Charact
     frame.render_widget(table, area);
 }
 
-fn render_first_row<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
-    let first_row_layout = Layout::new()
+fn render_second_row<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
+    let second_row_layout = Layout::new()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Ratio(1, 4); 4])
         .split(area);
 
-    render_proficiency_bonus(frame, character, first_row_layout[0]);
-    render_walking_speed(frame, character, first_row_layout[1]);
-    render_initiative(frame, character, first_row_layout[2]);
-    render_armor_class(frame, character, first_row_layout[3]);
-}
-
-fn render_rolls_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
-    let twin_layout = Layout::new()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50); 2])
-        .split(area);
-
-    let left_column_layout = Layout::new()
-        .constraints([
-            Constraint::Ratio(1, 4),
-            Constraint::Ratio(1, 4),
-            Constraint::Ratio(1, 2),
-        ])
-        .split(twin_layout[0]);
-    render_saving_throws_block(frame, character, left_column_layout[0]);
-    render_senses_block(frame, character, left_column_layout[1]);
-    render_proficiencies_and_languages_block(frame, character, left_column_layout[2]);
-
-    render_skills_table(frame, character, twin_layout[1]);
+    render_proficiency_bonus(frame, character, second_row_layout[0]);
+    render_walking_speed(frame, character, second_row_layout[1]);
+    render_initiative(frame, character, second_row_layout[2]);
+    render_armor_class(frame, character, second_row_layout[3]);
 }
 
 fn render_senses_block<B: Backend>(frame: &mut Frame<'_, B>, character: &Character, area: Rect) {
@@ -489,6 +474,37 @@ fn render_proficiencies_and_languages_block<B: Backend>(
     );
 }
 
+enum PageLink {
+    AbilitiesSavesSenses,
+    Skills,
+    Actions,
+    Inventory,
+    Spells,
+    FeaturesTraits,
+    ProficienciesLanguages,
+    Description,
+    Notes,
+    ExtrasCreatures,
+}
+
+impl From<usize> for PageLink {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => PageLink::AbilitiesSavesSenses,
+            1 => PageLink::Skills,
+            2 => PageLink::Actions,
+            3 => PageLink::Inventory,
+            4 => PageLink::Spells,
+            5 => PageLink::FeaturesTraits,
+            6 => PageLink::ProficienciesLanguages,
+            7 => PageLink::Description,
+            8 => PageLink::Notes,
+            9 => PageLink::ExtrasCreatures,
+            _ => PageLink::AbilitiesSavesSenses,
+        }
+    }
+}
+
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // This is where you add new widgets.
@@ -496,36 +512,63 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
     // - https://github.com/ratatui-org/ratatui/tree/master/examples
 
-    let character_ref = app
+    let character = app
         .character
-        .as_ref()
+        .as_mut()
         .expect("Can't render a `Character` if it doesn't exist.");
 
-    let header_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(1, 10), Constraint::Min(0)].as_ref())
-        .split(frame.size());
-
-    let body_layout = Layout::new()
+    let document_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Ratio(1, 16),
-                Constraint::Ratio(1, 16),
+                Constraint::Ratio(1, 5),
                 Constraint::Min(0),
+                Constraint::Ratio(1, 10),
             ]
             .as_ref(),
         )
-        .split(header_layout[1]);
+        .split(frame.size());
 
-    render_header(frame, character_ref, header_layout[0]);
+    render_header(frame, character, document_layout[0]);
 
-    render_first_row(frame, character_ref, body_layout[0]);
-    render_abilities(frame, character_ref, body_layout[1]);
-    render_rolls_block(frame, character_ref, body_layout[2]);
+    match app.nav_menu_state.selected.into() {
+        PageLink::AbilitiesSavesSenses => {
+            let body_layout = Layout::new()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Max(4),
+                        Constraint::Ratio(1, 3),
+                        Constraint::Ratio(1, 3),
+                    ]
+                    .as_ref(),
+                )
+                .split(document_layout[1]);
+
+            render_abilities(frame, character, body_layout[0]);
+            render_saving_throws_block(frame, character, body_layout[1]);
+            render_senses_block(frame, character, body_layout[2]);
+        }
+        PageLink::Skills => {
+            let body_layout = Layout::new()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(0)].as_ref())
+                .split(document_layout[1]);
+
+            render_skills_table(frame, character, body_layout[0]);
+        }
+        PageLink::ProficienciesLanguages => {
+            let body_layout = Layout::new()
+                .constraints([Constraint::Min(0)].as_ref())
+                .split(document_layout[1]);
+
+            render_proficiencies_and_languages_block(frame, character, body_layout[0]);
+        }
+        _ => {}
+    }
 
     if app.nav_menu_state.is_open {
-        let items: Vec<ListItem> = vec![
+        let items: Vec<ListItem> = [
             "Abilities, Saves, Senses",
             "Skills",
             "Actions",
@@ -548,7 +591,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                     .border_type(BorderType::Rounded),
             )
             .highlight_symbol(">> ");
-        let area = centered_rect(60, 80, header_layout[1]);
+        let area = centered_rect(60, 80, document_layout[1]);
         let mut list_state = ListState::default().with_selected(Some(app.nav_menu_state.selected));
         frame.render_widget(Clear, area);
         frame.render_stateful_widget(list, area, &mut list_state);
