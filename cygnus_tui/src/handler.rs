@@ -14,14 +14,16 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 app.quit();
             }
         }
-        // Counter handlers
-        KeyCode::Right => {
-            app.increment_counter();
+        // Control Nav Menu
+        KeyCode::Char('j') | KeyCode::Down => {
+            app.nav_down();
         }
-        KeyCode::Left => {
-            app.decrement_counter();
+        KeyCode::Char('k') | KeyCode::Up => {
+            app.nav_up();
         }
-        // Other handlers you could add here.
+        KeyCode::Char(' ') | KeyCode::Enter => {
+            app.toggle_nav_menu();
+        }
         _ => {}
     }
     Ok(())

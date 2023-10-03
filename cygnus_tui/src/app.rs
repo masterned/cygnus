@@ -14,23 +14,29 @@ use cygnus_models::{
 /// Application result type.
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+#[derive(Clone, Debug, Default)]
+pub struct NavMenuState {
+    pub is_open: bool,
+    pub selected: usize,
+}
+
 /// Application.
 #[derive(Debug)]
 pub struct App {
     /// Is the application running?
     pub running: bool,
-    /// counter
-    pub counter: u8,
 
     pub character: Option<Character>,
+
+    pub nav_menu_state: NavMenuState,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            counter: 0,
             character: None,
+            nav_menu_state: NavMenuState::default(),
         }
     }
 }
@@ -146,15 +152,19 @@ impl App {
         self.running = false;
     }
 
-    pub fn increment_counter(&mut self) {
-        if let Some(res) = self.counter.checked_add(1) {
-            self.counter = res;
+    pub fn toggle_nav_menu(&mut self) {
+        self.nav_menu_state.is_open = !self.nav_menu_state.is_open;
+    }
+
+    pub fn nav_down(&mut self) {
+        if let Some(res) = self.nav_menu_state.selected.checked_add(1) {
+            self.nav_menu_state.selected = res;
         }
     }
 
-    pub fn decrement_counter(&mut self) {
-        if let Some(res) = self.counter.checked_sub(1) {
-            self.counter = res;
+    pub fn nav_up(&mut self) {
+        if let Some(res) = self.nav_menu_state.selected.checked_sub(1) {
+            self.nav_menu_state.selected = res;
         }
     }
 }

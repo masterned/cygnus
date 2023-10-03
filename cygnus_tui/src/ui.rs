@@ -1,10 +1,7 @@
 use cygnus_models::{ability, character::Character, modifiers::Proficiency, skills};
 use ratatui::{
     prelude::*,
-    widgets::{
-        block::{Position, Title},
-        Block, BorderType, Borders, Cell, Paragraph, Row, Table, Wrap,
-    },
+    widgets::{block::*, *},
 };
 
 use crate::app::App;
@@ -504,18 +501,82 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         .as_ref()
         .expect("Can't render a `Character` if it doesn't exist.");
 
-    let layout = Layout::default()
+    let header_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Ratio(1, 10),
-            Constraint::Ratio(1, 16),
-            Constraint::Ratio(1, 16),
-            Constraint::Min(0),
-        ])
+        .constraints([Constraint::Ratio(1, 10), Constraint::Min(0)].as_ref())
         .split(frame.size());
 
-    render_header(frame, character_ref, layout[0]);
-    render_first_row(frame, character_ref, layout[1]);
-    render_abilities(frame, character_ref, layout[2]);
-    render_rolls_block(frame, character_ref, layout[3]);
+    let body_layout = Layout::new()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Ratio(1, 16),
+                Constraint::Ratio(1, 16),
+                Constraint::Min(0),
+            ]
+            .as_ref(),
+        )
+        .split(header_layout[1]);
+
+    render_header(frame, character_ref, header_layout[0]);
+
+    render_first_row(frame, character_ref, body_layout[0]);
+    render_abilities(frame, character_ref, body_layout[1]);
+    render_rolls_block(frame, character_ref, body_layout[2]);
+
+    if app.nav_menu_state.is_open {
+        let items: Vec<ListItem> = vec![
+            "Abilities, Saves, Senses",
+            "Skills",
+            "Actions",
+            "Inventory",
+            "Spells",
+            "Features & Traits",
+            "Proficiencies & Languages",
+            "Description",
+            "Notes",
+            "Extras: Creatures",
+        ]
+        .iter()
+        .map(|&s| ListItem::new(s))
+        .collect();
+        let list = List::new(items)
+            .block(
+                Block::new()
+                    .title(Title::from("Pages").alignment(Alignment::Center))
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded),
+            )
+            .highlight_symbol(">> ");
+        let area = centered_rect(60, 80, header_layout[1]);
+        let mut list_state = ListState::default().with_selected(Some(app.nav_menu_state.selected));
+        frame.render_widget(Clear, area);
+        frame.render_stateful_widget(list, area, &mut list_state);
+    }
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage(percent_y),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_x),
+                Constraint::Percentage((100 - percent_x) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])[1]
 }
