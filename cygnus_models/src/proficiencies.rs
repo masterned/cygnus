@@ -9,7 +9,7 @@ pub struct Proficiencies {
 }
 
 impl Proficiencies {
-    pub fn new() {
+    pub fn new() -> Self {
         Default::default()
     }
 
