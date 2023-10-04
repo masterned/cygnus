@@ -158,13 +158,18 @@ impl App {
 
     pub fn nav_down(&mut self) {
         if let Some(res) = self.nav_menu_state.selected.checked_add(1) {
-            self.nav_menu_state.selected = res;
+            self.nav_menu_state.selected = res % 10;
         }
     }
 
     pub fn nav_up(&mut self) {
-        if let Some(res) = self.nav_menu_state.selected.checked_sub(1) {
-            self.nav_menu_state.selected = res;
+        if let Some(res) = self
+            .nav_menu_state
+            .selected
+            .checked_add(10)
+            .and_then(|a| a.checked_sub(1))
+        {
+            self.nav_menu_state.selected = res % 10;
         }
     }
 }
