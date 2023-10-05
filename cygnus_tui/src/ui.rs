@@ -474,6 +474,92 @@ fn render_proficiencies_and_languages_block<B: Backend>(
     );
 }
 
+fn render_inventory_table<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    _character: &Character,
+    area: Rect,
+) {
+    let header_cells = [
+        "Equipped",
+        "Attuned",
+        "Name",
+        "Types",
+        "Weight",
+        "Qty",
+        "Cost (GP)",
+    ]
+    .iter()
+    .map(|&h| Cell::from(h));
+    let header = Row::new(header_cells).height(1).bottom_margin(1);
+
+    let rows = [
+        Row::new([
+            Cell::from("*"),
+            Cell::from("*"),
+            Cell::from("Amulet of Health"),
+            Cell::from("Wonderous Item"),
+            Cell::from("--"),
+            Cell::from("--"),
+            Cell::from("--"),
+        ]),
+        Row::new([
+            Cell::from("*"),
+            Cell::from("*"),
+            Cell::from("Cloak of Protection"),
+            Cell::from("Wonderous Item"),
+            Cell::from("--"),
+            Cell::from("--"),
+            Cell::from("--"),
+        ]),
+        Row::new([
+            Cell::from("-"),
+            Cell::from("-"),
+            Cell::from("Clothes, Traveler's"),
+            Cell::from("Gear, Adventuring Gear"),
+            Cell::from("4 lb."),
+            Cell::from("1"),
+            Cell::from("2"),
+        ]),
+        Row::new([
+            Cell::from("*"),
+            Cell::from("-"),
+            Cell::from("Studded Leather"),
+            Cell::from("Light Armor, Studded Leather"),
+            Cell::from("13 lb."),
+            Cell::from("--"),
+            Cell::from("45"),
+        ]),
+    ];
+
+    let table = Table::new(rows)
+        .header(header)
+        .block(
+            Block::new()
+                .title(
+                    Title::from("Inventory")
+                        .alignment(Alignment::Center)
+                        .position(Position::Top),
+                )
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .widths(
+            [
+                Constraint::Max(8),
+                Constraint::Max(7),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Max(6),
+                Constraint::Max(3),
+                Constraint::Max(9),
+            ]
+            .as_ref(),
+        )
+        .column_spacing(1);
+
+    frame.render_widget(table, area);
+}
+
 enum PageLink {
     AbilitiesSavesSenses,
     Skills,
@@ -556,6 +642,13 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 .split(document_layout[1]);
 
             render_skills_table(frame, character, body_layout[0]);
+        }
+        PageLink::Inventory => {
+            let body_layout = Layout::new()
+                .constraints([Constraint::Min(0)].as_ref())
+                .split(document_layout[1]);
+
+            render_inventory_table(frame, character, body_layout[0]);
         }
         PageLink::ProficienciesLanguages => {
             let body_layout = Layout::new()
