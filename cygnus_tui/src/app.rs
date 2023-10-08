@@ -44,7 +44,11 @@ impl Default for App {
 impl App {
     fn create_character(&mut self) -> Result<(), Box<dyn error::Error>> {
         let personality = Personality::default()
-            .add_trait("I always have a plan for what to do when things go wrong.");
+            .add_trait("I always have a plan for what to do when things go wrong.")
+            .add_trait("I am always calm, no matter what the situation. I never raise my voice or let my emotions control me.")
+            .add_ideal("People. I'm loyal to my friends, not to any ideals, and everyone else can take a trip down the Styx for all I care.")
+            .add_bond("Someone I loved died because of a mistake I made. That will never happen again.")
+            .add_flaw("I turn tail and run when things look bad.");
 
         let race = race::Builder::new()
             .name("Haskellian")

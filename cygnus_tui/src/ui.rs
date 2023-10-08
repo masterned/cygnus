@@ -560,6 +560,144 @@ fn render_inventory_table<B: Backend>(
     frame.render_widget(table, area);
 }
 
+fn render_description_page<B: Backend>(
+    frame: &mut Frame<'_, B>,
+    character: &Character,
+    area: Rect,
+) {
+    let block = Block::new()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title(Title::from("Description").alignment(Alignment::Center));
+
+    let layout = Layout::new()
+        .constraints(
+            [
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 2),
+                Constraint::Ratio(1, 4),
+            ]
+            .as_ref(),
+        )
+        .split(block.clone().inner(area));
+
+    frame.render_widget(block, area);
+
+    let background_block = Block::new()
+        .borders(Borders::TOP)
+        .title(Title::from("Background"));
+
+    let background_layout = Layout::new()
+        .constraints([Constraint::Max(1), Constraint::Max(1), Constraint::Min(0)].as_ref())
+        .split(background_block.clone().inner(layout[0]));
+
+    frame.render_widget(background_block, layout[0]);
+
+    let background_title = Paragraph::new("Urban Bounty Hunter").style(Style::new().bold());
+    frame.render_widget(background_title, background_layout[0]);
+
+    let background_feature =
+        Paragraph::new("Feature: Ear to the Ground").style(Style::new().italic());
+    frame.render_widget(background_feature, background_layout[1]);
+
+    let background_feature_description = Paragraph::new("You are in frequent contact with people in the segment of society that your chosen quarries move through. These people might be associated with the criminal underworld, the rough-and-tumble folk of the streets, or members of high society. This connection comes in the form of a contact in any city you visit, a person who provides information about the people and places of the local area.").wrap(Wrap::default());
+    frame.render_widget(background_feature_description, background_layout[2]);
+
+    let characteristics_block = Block::new()
+        .title(Title::from("Characteristics"))
+        .borders(Borders::TOP);
+
+    let characteristics_layout = Layout::new()
+        .constraints([Constraint::Ratio(1, 2); 2].as_ref())
+        .direction(Direction::Horizontal)
+        .split(characteristics_block.clone().inner(layout[1]));
+
+    frame.render_widget(characteristics_block, layout[1]);
+
+    // Should be pulling these from the Character,
+    // but they don't have Display impls yet...
+    let alignment = "Lawful Neutral";
+    let gender = "Male";
+    let size = "Medium";
+
+    // These aren't even tracked in the Character yet...
+    let eye_color = "Blue";
+    let height = "5' 11\"";
+    let faith = "--"; // make sure `None` shows up as "--"
+    let hair_color = "Silver";
+    let skin_tone = "Fair";
+    let age = "21";
+    let weight = "142 lb.";
+
+    let characteristics_list = List::new([
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Alignment: ", Style::default().bold()),
+            Span::raw(format!("{alignment}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Gender: ", Style::default().bold()),
+            Span::raw(format!("{gender}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Eyes: ", Style::default().bold()),
+            Span::raw(format!("{eye_color}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Size: ", Style::default().bold()),
+            Span::raw(format!("{size}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Height: ", Style::default().bold()),
+            Span::raw(format!("{height}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Faith: ", Style::default().bold()),
+            Span::raw(format!("{faith}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Hair: ", Style::default().bold()),
+            Span::raw(format!("{hair_color}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Skin: ", Style::default().bold()),
+            Span::raw(format!("{skin_tone}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Age: ", Style::default().bold()),
+            Span::raw(format!("{age}")),
+        ])),
+        ListItem::new(text::Line::from(vec![
+            Span::styled("Weight: ", Style::default().bold()),
+            Span::raw(format!("{weight}")),
+        ])),
+    ]);
+
+    frame.render_widget(characteristics_list, characteristics_layout[0]);
+
+    let personality_layout = Layout::new()
+        .constraints([Constraint::Ratio(1, 4); 4].as_ref())
+        .split(characteristics_layout[1]);
+
+    let personailty_traits =
+        Paragraph::new(character.get_personality().traits.join("\n")).wrap(Wrap::default());
+    frame.render_widget(personailty_traits, personality_layout[0]);
+
+    let ideals =
+        Paragraph::new(character.get_personality().ideals.join("\n")).wrap(Wrap::default());
+    frame.render_widget(ideals, personality_layout[1]);
+
+    let bonds = Paragraph::new(character.get_personality().bonds.join("\n")).wrap(Wrap::default());
+    frame.render_widget(bonds, personality_layout[2]);
+
+    let flaws = Paragraph::new(character.get_personality().flaws.join("\n")).wrap(Wrap::default());
+    frame.render_widget(flaws, personality_layout[3]);
+
+    let appearance_block = Block::new()
+        .borders(Borders::TOP)
+        .title(Title::from("Appearance"));
+    frame.render_widget(appearance_block, layout[2]);
+}
+
 enum PageLink {
     AbilitiesSavesSenses,
     Skills,
@@ -657,6 +795,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
             render_proficiencies_and_languages_block(frame, character, body_layout[0]);
         }
+        PageLink::Description => render_description_page(frame, character, document_layout[1]),
         _ => {}
     }
 
