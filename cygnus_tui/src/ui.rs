@@ -616,7 +616,7 @@ fn render_description_page<B: Backend>(
 
     // Should be pulling these from the Character,
     // but they don't have Display impls yet...
-    let alignment = "Lawful Neutral";
+    let alignment = character.get_alignment();
     let gender = "Male";
     let size = "Medium";
 
@@ -632,7 +632,7 @@ fn render_description_page<B: Backend>(
     let characteristics_list = List::new([
         ListItem::new(text::Line::from(vec![
             Span::styled("Alignment: ", Style::default().bold()),
-            Span::raw(format!("{alignment}")),
+            Span::raw(alignment.to_string()),
         ])),
         ListItem::new(text::Line::from(vec![
             Span::styled("Gender: ", Style::default().bold()),

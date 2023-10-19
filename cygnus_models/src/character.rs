@@ -21,6 +21,18 @@ pub enum Conformity {
     Chaotic,
 }
 
+impl fmt::Display for Conformity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            Conformity::Lawful => "Lawful",
+            Conformity::Neutral => "Neutral",
+            Conformity::Chaotic => "Chaotic",
+        };
+
+        write!(f, "{result}")
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Morality {
     Good,
@@ -28,7 +40,26 @@ pub enum Morality {
     Evil,
 }
 
-pub type Alignment = (Conformity, Morality);
+impl fmt::Display for Morality {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            Morality::Good => "Good",
+            Morality::Neutral => "Neutral",
+            Morality::Evil => "Evil",
+        };
+
+        write!(f, "{result}")
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Alignment(pub Conformity, pub Morality);
+
+impl fmt::Display for Alignment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.0, self.1)
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Gender {
@@ -87,7 +118,7 @@ impl Builder {
         conformity: Conformity,
         morality: Morality,
     ) -> Result<Self, ConstructionError> {
-        let _ = self.alignment.insert((conformity, morality));
+        let _ = self.alignment.insert(Alignment(conformity, morality));
 
         Ok(self)
     }
@@ -618,7 +649,7 @@ mod tests {
         fn dummy() -> Self {
             Self {
                 name: "Dummy".into(),
-                alignment: (Conformity::Neutral, Morality::Neutral),
+                alignment: Alignment(Conformity::Neutral, Morality::Neutral),
                 gender: None,
                 base_ability_scores: Abilities::from(AbilitiesTemplate {
                     strength: 8,
