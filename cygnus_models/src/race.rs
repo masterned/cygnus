@@ -51,6 +51,21 @@ pub enum Size {
     Gargantuan,
 }
 
+impl fmt::Display for Size {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            Size::Tiny => "Tiny",
+            Size::Small => "Small",
+            Size::Medium => "Medium",
+            Size::Large => "Large",
+            Size::Huge => "Huge",
+            Size::Gargantuan => "Gargantuan",
+        };
+
+        write!(f, "{result}")
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Language {
     Common,
