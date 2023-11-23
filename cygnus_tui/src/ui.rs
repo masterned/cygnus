@@ -614,11 +614,11 @@ fn render_description_page<B: Backend>(
 
     frame.render_widget(characteristics_block, layout[1]);
 
-    // Should be pulling these from the Character,
-    // but they don't have Display impls yet...
     let alignment = character.get_alignment();
-    let gender = "Male";
-    let size = "Medium";
+    let gender_str = character
+        .get_gender()
+        .map_or("--".into(), |g| g.to_string());
+    let size = character.get_size();
 
     // These aren't even tracked in the Character yet...
     let eye_color = "Blue";
@@ -636,7 +636,7 @@ fn render_description_page<B: Backend>(
         ])),
         ListItem::new(text::Line::from(vec![
             Span::styled("Gender: ", Style::default().bold()),
-            Span::raw(format!("{gender}")),
+            Span::raw(format!("{gender_str}")),
         ])),
         ListItem::new(text::Line::from(vec![
             Span::styled("Eyes: ", Style::default().bold()),
