@@ -1,6 +1,6 @@
 use cygnus_utils::lower_bound_map::LowerBoundMap;
 
-use crate::{ability, dice::Roll, race::DamageType};
+use crate::{ability, dice::Roll, race::DamageType, units::Duration};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CastingTime {
@@ -23,13 +23,6 @@ pub enum Component {
     Verbal,
     Somatic,
     Material,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Duration {
-    Instantaneous,
-    Rounds(usize),
-    Minutes(usize),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

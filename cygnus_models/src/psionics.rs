@@ -29,6 +29,8 @@ impl Talent {
 pub mod discipline {
     use std::{error::Error, fmt, ops::Range};
 
+    use crate::units::Duration;
+
     #[derive(Debug)]
     pub struct Discipline {
         name: String,
@@ -167,9 +169,25 @@ pub mod discipline {
         name: String,
         description: String,
         cost: Range<usize>,
+        duration: Option<Duration>,
     }
 
     impl Act {
+        #[must_use]
+        pub fn new(
+            name: &str,
+            description: &str,
+            cost: Range<usize>,
+            duration: Option<Duration>,
+        ) -> Self {
+            Act {
+                name: name.into(),
+                description: description.into(),
+                cost,
+                duration,
+            }
+        }
+
         #[must_use]
         pub fn get_name(&self) -> &str {
             &self.name
@@ -183,6 +201,11 @@ pub mod discipline {
         #[must_use]
         pub fn get_cost(&self) -> &Range<usize> {
             &self.cost
+        }
+
+        #[must_use]
+        pub fn get_duration(&self) -> &Option<Duration> {
+            &self.duration
         }
     }
 }

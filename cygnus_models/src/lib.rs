@@ -13,3 +13,4 @@ pub mod senses;
 pub mod skills;
 pub mod slot;
 pub mod spell;
+pub mod units;
