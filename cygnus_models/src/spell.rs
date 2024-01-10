@@ -145,6 +145,12 @@ impl Spell {
 #[derive(Clone, Debug, Default)]
 pub struct SpellList(Vec<Spell>);
 
+impl From<SpellList> for Vec<Spell> {
+    fn from(value: SpellList) -> Self {
+        value.0
+    }
+}
+
 impl From<Vec<Spell>> for SpellList {
     fn from(value: Vec<Spell>) -> Self {
         Self(value)
