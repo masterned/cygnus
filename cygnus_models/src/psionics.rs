@@ -27,7 +27,7 @@ impl Talent {
 }
 
 pub mod discipline {
-    use std::ops::Range;
+    use std::{error::Error, fmt, ops::Range};
 
     #[derive(Debug)]
     pub struct Discipline {
@@ -143,9 +143,24 @@ pub mod discipline {
         }
     }
 
+    #[derive(Debug)]
     pub enum BuildError {
         MissingField(String),
     }
+
+    impl fmt::Display for BuildError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(
+                f,
+                "Unable to build Discipline:\n{}",
+                match self {
+                    Self::MissingField(field) => format!("\tmissing `{field}` field"),
+                }
+            )
+        }
+    }
+
+    impl Error for BuildError {}
 
     #[derive(Clone, Debug)]
     pub struct Act {
