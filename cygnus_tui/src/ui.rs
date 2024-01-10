@@ -23,7 +23,7 @@ fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragr
         )
 }
 
-fn render_ability_widget<B: Backend>(
+fn render_ability_widget(
     frame: &mut Frame,
     character: &Character,
     ability: ability::Identifier,
@@ -34,7 +34,7 @@ fn render_ability_widget<B: Backend>(
     frame.render_widget(ability, rect);
 }
 
-fn render_abilities<B: Backend>(frame: &mut Frame, character: &Character, rect: Rect) {
+fn render_abilities(frame: &mut Frame, character: &Character, rect: Rect) {
     let abilities_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Ratio(1, 6); 6])
@@ -44,11 +44,11 @@ fn render_abilities<B: Backend>(frame: &mut Frame, character: &Character, rect: 
         .iter()
         .enumerate()
         .for_each(|(i, &ability)| {
-            render_ability_widget::<B>(frame, character, ability, abilities_layout[i])
+            render_ability_widget(frame, character, ability, abilities_layout[i])
         });
 }
 
-fn render_header<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_header(frame: &mut Frame, character: &Character, area: Rect) {
     let header_layout =
         Layout::new(Direction::Vertical, [Constraint::Ratio(1, 2); 2].as_ref()).split(area);
 
@@ -81,12 +81,12 @@ fn render_header<B: Backend>(frame: &mut Frame, character: &Character, area: Rec
 
     // header first row
     frame.render_widget(name_card_widget, first_row_layout[0]);
-    render_health_block::<B>(frame, character, first_row_layout[2]);
+    render_health_block(frame, character, first_row_layout[2]);
 
-    render_second_row::<B>(frame, character, header_layout[1]);
+    render_second_row(frame, character, header_layout[1]);
 }
 
-fn render_health_block<B: Backend>(frame: &mut Frame, character: &Character, rect: Rect) {
+fn render_health_block(frame: &mut Frame, character: &Character, rect: Rect) {
     let health_block = Block::new()
         .title(
             Title::from("Hit Points")
@@ -140,7 +140,7 @@ fn render_health_block<B: Backend>(frame: &mut Frame, character: &Character, rec
     );
 }
 
-fn render_saving_throw_pair<B: Backend>(
+fn render_saving_throw_pair(
     frame: &mut Frame,
     character: &Character,
     ability: ability::Identifier,
@@ -164,7 +164,7 @@ fn render_saving_throw_pair<B: Backend>(
     );
 }
 
-fn render_saving_throw_row<B: Backend>(
+fn render_saving_throw_row(
     frame: &mut Frame,
     character: &Character,
     ability_left: ability::Identifier,
@@ -176,11 +176,11 @@ fn render_saving_throw_row<B: Backend>(
         .constraints([Constraint::Ratio(1, 2); 2])
         .split(rect);
 
-    render_saving_throw_pair::<B>(frame, character, ability_left, saving_throw_row_layout[0]);
-    render_saving_throw_pair::<B>(frame, character, ability_right, saving_throw_row_layout[1]);
+    render_saving_throw_pair(frame, character, ability_left, saving_throw_row_layout[0]);
+    render_saving_throw_pair(frame, character, ability_right, saving_throw_row_layout[1]);
 }
 
-fn render_saving_throws_block<B: Backend>(frame: &mut Frame, character: &Character, rect: Rect) {
+fn render_saving_throws_block(frame: &mut Frame, character: &Character, rect: Rect) {
     let saving_throws_block = Block::new()
         .title(
             Title::from("Saving Throws")
@@ -201,11 +201,11 @@ fn render_saving_throws_block<B: Backend>(frame: &mut Frame, character: &Charact
         .chunks(2)
         .enumerate()
         .for_each(|(i, pair)| {
-            render_saving_throw_row::<B>(frame, character, pair[0], pair[1], saving_throw_rows[i])
+            render_saving_throw_row(frame, character, pair[0], pair[1], saving_throw_rows[i])
         });
 }
 
-fn render_armor_class<B: Backend>(frame: &mut Frame, character: &Character, rect: Rect) {
+fn render_armor_class(frame: &mut Frame, character: &Character, rect: Rect) {
     let armor_class = Paragraph::new(format!("{}", character.get_armor_class()))
         .block(
             Block::default()
@@ -227,7 +227,7 @@ fn render_armor_class<B: Backend>(frame: &mut Frame, character: &Character, rect
     frame.render_widget(armor_class, rect);
 }
 
-fn render_initiative<B: Backend>(frame: &mut Frame, character: &Character, rect: Rect) {
+fn render_initiative(frame: &mut Frame, character: &Character, rect: Rect) {
     let initiative = Paragraph::new(format!("{:+}", character.get_initiative()))
         .block(
             Block::default()
@@ -244,7 +244,7 @@ fn render_initiative<B: Backend>(frame: &mut Frame, character: &Character, rect:
     frame.render_widget(initiative, rect);
 }
 
-fn render_proficiency_bonus<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_proficiency_bonus(frame: &mut Frame, character: &Character, area: Rect) {
     let proficiency_bonus = Paragraph::new(format!("{:+}", character.get_proficiency_bonus()))
         .block(
             Block::default()
@@ -266,7 +266,7 @@ fn render_proficiency_bonus<B: Backend>(frame: &mut Frame, character: &Character
     frame.render_widget(proficiency_bonus, area);
 }
 
-fn render_walking_speed<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_walking_speed(frame: &mut Frame, character: &Character, area: Rect) {
     let walking_speed = Paragraph::new(format!("{} ft.", character.get_walking_speed()))
         .block(
             Block::default()
@@ -288,7 +288,7 @@ fn render_walking_speed<B: Backend>(frame: &mut Frame, character: &Character, ar
     frame.render_widget(walking_speed, area);
 }
 
-fn render_skills_table<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_skills_table(frame: &mut Frame, character: &Character, area: Rect) {
     let header_cells = ["Prof", "Mod", "Skill", "Bonus"]
         .iter()
         .map(|&h| Cell::from(h));
@@ -323,17 +323,17 @@ fn render_skills_table<B: Backend>(frame: &mut Frame, character: &Character, are
     frame.render_widget(table, area);
 }
 
-fn render_second_row<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_second_row(frame: &mut Frame, character: &Character, area: Rect) {
     let second_row_layout =
         Layout::new(Direction::Horizontal, [Constraint::Ratio(1, 4); 4]).split(area);
 
-    render_proficiency_bonus::<B>(frame, character, second_row_layout[0]);
-    render_walking_speed::<B>(frame, character, second_row_layout[1]);
-    render_initiative::<B>(frame, character, second_row_layout[2]);
-    render_armor_class::<B>(frame, character, second_row_layout[3]);
+    render_proficiency_bonus(frame, character, second_row_layout[0]);
+    render_walking_speed(frame, character, second_row_layout[1]);
+    render_initiative(frame, character, second_row_layout[2]);
+    render_armor_class(frame, character, second_row_layout[3]);
 }
 
-fn render_senses_block<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_senses_block(frame: &mut Frame, character: &Character, area: Rect) {
     let senses_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -400,11 +400,7 @@ fn render_senses_block<B: Backend>(frame: &mut Frame, character: &Character, are
     }
 }
 
-fn render_proficiencies_and_languages_block<B: Backend>(
-    frame: &mut Frame,
-    character: &Character,
-    area: Rect,
-) {
+fn render_proficiencies_and_languages_block(frame: &mut Frame, character: &Character, area: Rect) {
     let block = Block::new()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -463,7 +459,7 @@ fn render_proficiencies_and_languages_block<B: Backend>(
     );
 }
 
-fn render_inventory_table<B: Backend>(frame: &mut Frame, _character: &Character, area: Rect) {
+fn render_inventory_table(frame: &mut Frame, _character: &Character, area: Rect) {
     let header_cells = [
         "Equipped",
         "Attuned",
@@ -545,7 +541,7 @@ fn render_inventory_table<B: Backend>(frame: &mut Frame, _character: &Character,
     frame.render_widget(table, area);
 }
 
-fn render_description_page<B: Backend>(frame: &mut Frame, character: &Character, area: Rect) {
+fn render_description_page(frame: &mut Frame, character: &Character, area: Rect) {
     let block = Block::new()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -710,7 +706,7 @@ impl From<usize> for PageLink {
 }
 
 /// Renders the user interface widgets.
-pub fn render<B: Backend>(app: &mut App, frame: &mut Frame) {
+pub fn render(app: &mut App, frame: &mut Frame) {
     // This is where you add new widgets.
     // See the following resources:
     // - https://docs.rs/ratatui/latest/ratatui/widgets/index.html
@@ -733,7 +729,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame) {
         )
         .split(frame.size());
 
-    render_header::<B>(frame, character, document_layout[0]);
+    render_header(frame, character, document_layout[0]);
 
     match app.nav_menu_state.selected.into() {
         PageLink::AbilitiesSavesSenses => {
@@ -748,31 +744,31 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame) {
             )
             .split(document_layout[1]);
 
-            render_abilities::<B>(frame, character, body_layout[0]);
-            render_saving_throws_block::<B>(frame, character, body_layout[1]);
-            render_senses_block::<B>(frame, character, body_layout[2]);
+            render_abilities(frame, character, body_layout[0]);
+            render_saving_throws_block(frame, character, body_layout[1]);
+            render_senses_block(frame, character, body_layout[2]);
         }
         PageLink::Skills => {
             let body_layout = Layout::new(Direction::Vertical, [Constraint::Min(0)].as_ref())
                 .split(document_layout[1]);
 
-            render_skills_table::<B>(frame, character, body_layout[0]);
+            render_skills_table(frame, character, body_layout[0]);
         }
         PageLink::Inventory => {
             let body_layout = Layout::default()
                 .constraints([Constraint::Min(0)].as_ref())
                 .split(document_layout[1]);
 
-            render_inventory_table::<B>(frame, character, body_layout[0]);
+            render_inventory_table(frame, character, body_layout[0]);
         }
         PageLink::ProficienciesLanguages => {
             let body_layout = Layout::default()
                 .constraints([Constraint::Min(0)].as_ref())
                 .split(document_layout[1]);
 
-            render_proficiencies_and_languages_block::<B>(frame, character, body_layout[0]);
+            render_proficiencies_and_languages_block(frame, character, body_layout[0]);
         }
-        PageLink::Description => render_description_page::<B>(frame, character, document_layout[1]),
+        PageLink::Description => render_description_page(frame, character, document_layout[1]),
         _ => {}
     }
 
