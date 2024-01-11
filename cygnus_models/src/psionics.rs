@@ -31,7 +31,7 @@ pub mod discipline {
 
     use crate::units::Duration;
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq)]
     pub struct Discipline {
         name: String,
         order: String,
@@ -67,7 +67,7 @@ pub mod discipline {
         }
     }
 
-    #[derive(Debug, Default)]
+    #[derive(Clone, Debug, Default)]
     pub struct Builder {
         name: Option<String>,
         order: Option<String>,
@@ -122,32 +122,43 @@ pub mod discipline {
         type Error = BuildError;
 
         fn try_from(value: Builder) -> Result<Self, Self::Error> {
-            let name = value
-                .name
-                .ok_or_else(|| Self::Error::MissingField(String::from("name")))?;
-            let order = value
-                .order
-                .ok_or_else(|| Self::Error::MissingField(String::from("order")))?;
-            let description = value
-                .description
-                .ok_or_else(|| Self::Error::MissingField(String::from("description")))?;
-            let focus = value
-                .focus
-                .ok_or_else(|| Self::Error::MissingField(String::from("focus")))?;
+            let mut missing_fields = None;
+
+            if value.name.is_none() {
+                missing_fields.get_or_insert(vec![]).push("name");
+            }
+            if value.order.is_none() {
+                missing_fields.get_or_insert(vec![]).push("order");
+            }
+            if value.description.is_none() {
+                missing_fields.get_or_insert(vec![]).push("description");
+            }
+            if value.focus.is_none() {
+                missing_fields.get_or_insert(vec![]).push("focus");
+            }
+            if let Some(missing_fields) = missing_fields {
+                return Err(BuildError::new_missing_fields_error(&missing_fields));
+            }
 
             Ok(Discipline {
-                name,
-                order,
-                description,
-                focus,
+                name: value.name.unwrap(),
+                order: value.order.unwrap(),
+                description: value.description.unwrap(),
+                focus: value.focus.unwrap(),
                 acts: value.acts,
             })
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub enum BuildError {
-        MissingField(String),
+        MissingField(Vec<String>),
+    }
+
+    impl BuildError {
+        pub fn new_missing_fields_error(missing_fields: &[impl Into<String> + Clone]) -> Self {
+            Self::MissingField(missing_fields.iter().map(|f| (*f).clone().into()).collect())
+        }
     }
 
     impl fmt::Display for BuildError {
@@ -156,7 +167,14 @@ pub mod discipline {
                 f,
                 "Unable to build Discipline:\n{}",
                 match self {
-                    Self::MissingField(field) => format!("\tmissing `{field}` field"),
+                    Self::MissingField(fields) => format!(
+                        "\tmissing field(s): {}",
+                        fields
+                            .iter()
+                            .map(|f| format!("`{f}`"))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ),
                 }
             )
         }
@@ -164,7 +182,7 @@ pub mod discipline {
 
     impl Error for BuildError {}
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq)]
     pub struct Act {
         name: String,
         description: String,
@@ -175,8 +193,8 @@ pub mod discipline {
     impl Act {
         #[must_use]
         pub fn new(
-            name: &str,
-            description: &str,
+            name: impl Into<String>,
+            description: impl Into<String>,
             cost: Range<usize>,
             duration: Option<Duration>,
         ) -> Self {
@@ -206,6 +224,77 @@ pub mod discipline {
         #[must_use]
         pub fn get_duration(&self) -> &Option<Duration> {
             &self.duration
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        mod builder {
+            use super::*;
+
+            #[test]
+            fn _should_succeed_when_all_fields_filled() -> Result<(), Box<dyn Error>> {
+                let builder = Builder::new()
+                    .name("Psychic Phantoms")
+                    .order("Awakened")
+                    .description(
+                    "Your power reaches into the creature's mind and creates false perceptions.",
+                ).focus("While focused on this discipline, you have advantage on all Charisma (Deception) checks.")
+                .add_act(&Act { name: String::from("Distracting Figment"), description: String::from("As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it takes 1d10 psychic damage per psi point spent and thinks it perceives a threatening creature just out of its sight; until the end of your next turn, it can’t use reactions, and melee attack rolls against it have advantage. On a successful save, it takes half as much damage."), cost: 1..8, duration: None });
+
+                let built_discipline: Discipline = builder.try_into()?;
+
+                assert_eq!(built_discipline, Discipline { name: String::from("Psychic Phantoms"), order: String::from("Awakened"), description: String::from("Your power reaches into the creature's mind and creates false perceptions."), focus: String::from("While focused on this discipline, you have advantage on all Charisma (Deception) checks."), acts: vec![Act{name:String::from("Distracting Figment"), description: String::from("As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it takes 1d10 psychic damage per psi point spent and thinks it perceives a threatening creature just out of its sight; until the end of your next turn, it can’t use reactions, and melee attack rolls against it have advantage. On a successful save, it takes half as much damage."), cost: 1..8, duration: None }]});
+
+                Ok(())
+            }
+
+            #[test]
+            fn _should_return_error_when_missing_field() {
+                let empty_buider = Builder::new();
+                assert_eq!(
+                    Discipline::try_from(empty_buider),
+                    Err(BuildError::new_missing_fields_error(&[
+                        "name",
+                        "order",
+                        "description",
+                        "focus"
+                    ]))
+                );
+
+                let named_builder = Builder::new().name("Test");
+                assert_eq!(
+                    Discipline::try_from(named_builder),
+                    Err(BuildError::new_missing_fields_error(&[
+                        "order",
+                        "description",
+                        "focus"
+                    ]))
+                );
+
+                let named_ordered_builder = Builder::new().name("Test").order("Test");
+                assert_eq!(
+                    Discipline::try_from(named_ordered_builder),
+                    Err(BuildError::new_missing_fields_error(&[
+                        "description",
+                        "focus"
+                    ]))
+                );
+            }
+
+            mod build_error {
+                use super::*;
+
+                #[test]
+                fn _should_handle_multiple_missing_fields() {
+                    let build_error =
+                        BuildError::new_missing_fields_error(&["name", "order", "description"]);
+
+                    assert_eq!(build_error.to_string(), "Unable to build Discipline:\n\tmissing field(s): `name`, `order`, `description`");
+                }
+            }
         }
     }
 }
