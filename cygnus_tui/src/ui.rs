@@ -1,10 +1,17 @@
-use cygnus_models::{ability, character::Character, modifiers::Proficiency, skills};
+use cygnus_models::{
+    ability,
+    character::Character,
+    modifiers::Proficiency,
+    psionics::discipline::{self, Act, Discipline},
+    skills,
+    units::Duration,
+};
 use ratatui::{
     prelude::*,
     widgets::{block::*, *},
 };
 
-use crate::app::App;
+use crate::{app::App, widgets::DisciplineWidget};
 
 fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragraph {
     let modifier = character.get_ability_modifier(ability);
@@ -747,6 +754,20 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             render_abilities(frame, character, body_layout[0]);
             render_saving_throws_block(frame, character, body_layout[1]);
             render_senses_block(frame, character, body_layout[2]);
+        }
+        PageLink::Actions => {
+            let act = Act::new("Phantom Foe", "As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it perceives a horrid creature adjacent to it until your concentration ends. During this time, the target can’t take reactions, and it takes 1d8 psychic damage at the start of each of its turns. The target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. You can increase the damage by 1d8 for each additional psi point spent on the ability.",3..4,Some(Duration::Minutes(1)));
+
+            let d_w = DisciplineWidget::from(Discipline::try_from(
+                discipline::Builder::new()
+                    .name("Phychic Phantoms")
+                    .order("Awakened")
+                    .description( "Your power reaches into a creature’s mind and causes it false perceptions.",
+                    ).focus("While focused on this discipline, you have advantage on Charisma (Deception) checks.")
+                    .add_act(&act),
+            ).unwrap());
+
+            frame.render_widget(d_w, document_layout[1]);
         }
         PageLink::Skills => {
             let body_layout = Layout::new(Direction::Vertical, [Constraint::Min(0)].as_ref())
