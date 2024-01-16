@@ -1,6 +1,121 @@
 #![warn(clippy::pedantic)]
 
-#[derive(Debug)]
+use std::{error::Error, fmt};
+
+use self::discipline::{Act, Discipline};
+
+struct Mystic {
+    psi_points: usize,
+    psi_point_max: usize,
+    talents: Vec<Talent>,
+    disciplines: Vec<Discipline>,
+    focus: Option<Discipline>,
+}
+
+impl Psionics for Mystic {
+    fn get_talents(&self) -> &[Talent] {
+        &self.talents
+    }
+
+    fn get_disciplines(&self) -> &[Discipline] {
+        &self.disciplines
+    }
+
+    fn get_psi_points(&self) -> usize {
+        self.psi_points
+    }
+
+    fn get_psi_points_mut(&mut self) -> &mut usize {
+        &mut self.psi_points
+    }
+
+    fn get_focus(&self) -> Option<&Discipline> {
+        self.focus.as_ref()
+    }
+
+    fn get_focus_mut(&mut self) -> &mut Option<Discipline> {
+        &mut self.focus
+    }
+
+    fn get_psi_point_max(&self) -> usize {
+        self.psi_point_max
+    }
+}
+
+trait Psionics {
+    fn get_talents(&self) -> &[Talent];
+
+    fn get_disciplines(&self) -> &[Discipline];
+
+    fn get_psi_points(&self) -> usize;
+
+    fn get_psi_points_mut(&mut self) -> &mut usize;
+
+    fn get_psi_point_max(&self) -> usize;
+
+    fn reset_psi_points(&mut self) {
+        *self.get_psi_points_mut() = self.get_psi_point_max();
+    }
+
+    fn get_focus(&self) -> Option<&Discipline>;
+
+    fn get_focus_mut(&mut self) -> &mut Option<Discipline>;
+
+    fn focus_on(&mut self, d: &Discipline) {
+        let _ = self.get_focus_mut().insert(d.clone());
+    }
+
+    fn has_act(&self, a: &Act) -> bool {
+        self.get_disciplines().iter().any(|d| d.has_act(a))
+    }
+
+    fn perform_act(&mut self, a: &Act, charge_mod: usize) -> Result<(), ActError> {
+        if !self.has_act(a) {
+            return Err(ActError::ActNotPracticed);
+        }
+
+        let psi_points_mut = self.get_psi_points_mut();
+
+        let act_cost = a.get_cost();
+
+        if *psi_points_mut < act_cost.start {
+            return Err(ActError::NotEnoughPoints);
+        }
+
+        if act_cost.start + charge_mod >= act_cost.end {
+            return Err(ActError::Overcharged);
+        }
+
+        *psi_points_mut -= act_cost.start + charge_mod;
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ActError {
+    NotEnoughPoints,
+    ActNotPracticed,
+    Overcharged,
+}
+
+impl fmt::Display for ActError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Cannot perform Act: {}",
+            match self {
+                Self::NotEnoughPoints => "not enough psi points",
+                Self::ActNotPracticed => "user doesn't know act",
+                Self::Overcharged => "act unable to handle psi points",
+            }
+        )
+    }
+}
+
+impl Error for ActError {}
+
+#[derive(Clone, Debug)]
 pub struct Talent {
     name: String,
     description: String,
@@ -27,7 +142,9 @@ impl Talent {
 }
 
 pub mod discipline {
-    use std::{error::Error, fmt, ops::Range};
+    use super::{fmt, Error};
+
+    use std::ops::Range;
 
     use crate::units::Duration;
 
@@ -64,6 +181,11 @@ pub mod discipline {
         #[must_use]
         pub fn get_acts(&self) -> &[Act] {
             &self.acts
+        }
+
+        #[must_use]
+        pub fn has_act(&self, a: &Act) -> bool {
+            self.acts.contains(a)
         }
     }
 
@@ -239,14 +361,33 @@ pub mod discipline {
                 let builder = Builder::new()
                     .name("Psychic Phantoms")
                     .order("Awakened")
-                    .description(
-                    "Your power reaches into the creature's mind and creates false perceptions.",
-                ).focus("While focused on this discipline, you have advantage on all Charisma (Deception) checks.")
-                .add_act(&Act { name: String::from("Distracting Figment"), description: String::from("As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it takes 1d10 psychic damage per psi point spent and thinks it perceives a threatening creature just out of its sight; until the end of your next turn, it can’t use reactions, and melee attack rolls against it have advantage. On a successful save, it takes half as much damage."), cost: 1..8, duration: None });
+                    .description("Your power reaches into the creature's mind and creates false perceptions.")
+                    .focus("While focused on this discipline, you have advantage on all Charisma (Deception) checks.")
+                    .add_act(&Act {
+                        name: String::from("Distracting Figment"),
+                        description: String::from("As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it takes 1d10 psychic damage per psi point spent and thinks it perceives a threatening creature just out of its sight; until the end of your next turn, it can’t use reactions, and melee attack rolls against it have advantage. On a successful save, it takes half as much damage."),
+                        cost: 1..8,
+                        duration: None }
+                    );
 
                 let built_discipline: Discipline = builder.try_into()?;
 
-                assert_eq!(built_discipline, Discipline { name: String::from("Psychic Phantoms"), order: String::from("Awakened"), description: String::from("Your power reaches into the creature's mind and creates false perceptions."), focus: String::from("While focused on this discipline, you have advantage on all Charisma (Deception) checks."), acts: vec![Act{name:String::from("Distracting Figment"), description: String::from("As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it takes 1d10 psychic damage per psi point spent and thinks it perceives a threatening creature just out of its sight; until the end of your next turn, it can’t use reactions, and melee attack rolls against it have advantage. On a successful save, it takes half as much damage."), cost: 1..8, duration: None }]});
+                assert_eq!(built_discipline,
+                    Discipline {
+                        name: String::from("Psychic Phantoms"),
+                        order: String::from("Awakened"),
+                        description: String::from("Your power reaches into the creature's mind and creates false perceptions."),
+                        focus: String::from("While focused on this discipline, you have advantage on all Charisma (Deception) checks."),
+                        acts: vec![
+                            Act {
+                                name: String::from("Distracting Figment"),
+                                description: String::from("As an action, choose one creature you can see within 60 feet of you. The target must make an Intelligence saving throw. On a failed save, it takes 1d10 psychic damage per psi point spent and thinks it perceives a threatening creature just out of its sight; until the end of your next turn, it can’t use reactions, and melee attack rolls against it have advantage. On a successful save, it takes half as much damage."),
+                                cost: 1..8,
+                                duration: None
+                            }
+                        ]
+                    }
+                );
 
                 Ok(())
             }
