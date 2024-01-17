@@ -1,6 +1,7 @@
 pub mod ability;
 pub mod background;
 pub mod character;
+pub mod characteristics;
 pub mod class;
 pub mod dice;
 pub mod feat;
