@@ -1,12 +1,69 @@
 use cygnus_models::{
+    background,
     psionics::discipline::{Act, Discipline},
     units::Duration,
 };
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Buffer, Rect},
-    widgets::{Block, BorderType, Borders, Paragraph, Widget, Wrap},
+    style::{Style, Stylize},
+    widgets::{block::Title, Block, BorderType, Borders, Paragraph, Widget, Wrap},
 };
+
+pub struct BackgroundWidget(background::Background);
+
+impl From<background::Background> for BackgroundWidget {
+    fn from(value: background::Background) -> Self {
+        Self(value)
+    }
+}
+
+impl Widget for BackgroundWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let b = Block::new()
+            .borders(Borders::TOP)
+            .title(Title::from("Background"));
+
+        let l = Layout::default()
+            .constraints([Constraint::Max(1), Constraint::Min(0)])
+            .split(b.inner(area));
+
+        Paragraph::new(self.0.get_name())
+            .style(Style::new().bold())
+            .render(l[0], buf);
+
+        let feature_widget: BackgroundFeatureWidget = self.0.get_feature().clone().into();
+        feature_widget.render(l[1], buf);
+
+        b.render(area, buf);
+    }
+}
+
+pub struct BackgroundFeatureWidget(background::Feature);
+
+impl From<background::Feature> for BackgroundFeatureWidget {
+    fn from(value: background::Feature) -> Self {
+        Self(value)
+    }
+}
+
+impl Widget for BackgroundFeatureWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let l = Layout::new(
+            Direction::Vertical,
+            [Constraint::Max(1), Constraint::Min(0)],
+        )
+        .split(area);
+
+        Paragraph::new(format!("Feature: {}", self.0.get_name()))
+            .style(Style::new().italic())
+            .render(l[0], buf);
+
+        Paragraph::new(self.0.get_description())
+            .wrap(Wrap::default())
+            .render(l[1], buf);
+    }
+}
 
 pub struct DisciplineWidget(Discipline);
 

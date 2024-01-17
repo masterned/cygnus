@@ -1,5 +1,5 @@
 use cygnus_models::{
-    ability,
+    ability, background,
     character::Character,
     modifiers::Proficiency,
     psionics::discipline::{self, Act, Discipline},
@@ -11,7 +11,10 @@ use ratatui::{
     widgets::{block::*, *},
 };
 
-use crate::{app::App, widgets::DisciplineWidget};
+use crate::{
+    app::App,
+    widgets::{BackgroundWidget, DisciplineWidget},
+};
 
 fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragraph {
     let modifier = character.get_ability_modifier(ability);
@@ -567,25 +570,26 @@ fn render_description_page(frame: &mut Frame, character: &Character, area: Rect)
 
     frame.render_widget(block, area);
 
-    let background_block = Block::new()
-        .borders(Borders::TOP)
-        .title(Title::from("Background"));
-
-    let background_layout = Layout::default()
-        .constraints([Constraint::Max(1), Constraint::Max(1), Constraint::Min(0)].as_ref())
-        .split(background_block.clone().inner(layout[0]));
-
-    frame.render_widget(background_block, layout[0]);
-
-    let background_title = Paragraph::new("Urban Bounty Hunter").style(Style::new().bold());
-    frame.render_widget(background_title, background_layout[0]);
-
-    let background_feature =
-        Paragraph::new("Feature: Ear to the Ground").style(Style::new().italic());
-    frame.render_widget(background_feature, background_layout[1]);
-
-    let background_feature_description = Paragraph::new("You are in frequent contact with people in the segment of society that your chosen quarries move through. These people might be associated with the criminal underworld, the rough-and-tumble folk of the streets, or members of high society. This connection comes in the form of a contact in any city you visit, a person who provides information about the people and places of the local area.").wrap(Wrap::default());
-    frame.render_widget(background_feature_description, background_layout[2]);
+    let background: BackgroundWidget = <background::Builder as TryInto<background::Background>>::try_into(background::Builder::new()
+        .name("Urban Bounty Hunter")
+        .description("You did bounty hunter stuff in an urban setting.")
+        .feature(
+            background::Feature::new(
+                "Ear to the Ground",
+                "You are in frequent contact with people in the segment of society that your chosen quarries move through. These people might be associated with the criminal underworld, the rough-and-tumble folk of the streets, or members of high society. This connection comes in the form of a contact in any city you visit, a person who provides information about the people and places of the local area."
+            )
+        )
+        .proficiencies(
+            background::Proficiencies::two_skills_two_tools(
+                skills::Identifier::Deception,
+                skills::Identifier::Persuasion,
+                "Dice Set",
+                "Card Deck"
+            )
+        ))
+        .unwrap()
+        .into();
+    frame.render_widget(background, layout[0]);
 
     let characteristics_block = Block::new()
         .title(Title::from("Characteristics"))
