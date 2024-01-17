@@ -1,4 +1,5 @@
 pub mod ability;
+pub mod background;
 pub mod character;
 pub mod class;
 pub mod dice;
