@@ -1,10 +1,12 @@
 use cygnus_models::{
     ability, background,
-    character::Character,
+    character::{self, Character, Conformity, Gender, Morality},
+    characteristics,
     modifiers::Proficiency,
     psionics::discipline::{self, Act, Discipline},
+    race::Size,
     skills,
-    units::Duration,
+    units::{Distance, Duration, Weight},
 };
 use ratatui::{
     prelude::*,
@@ -13,7 +15,7 @@ use ratatui::{
 
 use crate::{
     app::App,
-    widgets::{BackgroundWidget, DisciplineWidget},
+    widgets::{BackgroundWidget, CharacteristicsWidget, DisciplineWidget},
 };
 
 fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragraph {
@@ -601,65 +603,20 @@ fn render_description_page(frame: &mut Frame, character: &Character, area: Rect)
 
     frame.render_widget(characteristics_block, layout[1]);
 
-    let alignment = character.get_alignment();
-    let gender_str = character
-        .get_gender()
-        .map_or("--".into(), |g| g.to_string());
-    let size = character.get_size();
-
-    // These aren't even tracked in the Character yet...
-    let eye_color = "Blue";
-    let height = "5' 11\"";
-    let faith = "--"; // make sure `None` shows up as "--"
-    let hair_color = "Silver";
-    let skin_tone = "Fair";
-    let age = "21";
-    let weight = "142 lb.";
-
-    let characteristics_list = List::new([
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Alignment: ", Style::default().bold()),
-            Span::raw(alignment.to_string()),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Gender: ", Style::default().bold()),
-            Span::raw(format!("{gender_str}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Eyes: ", Style::default().bold()),
-            Span::raw(format!("{eye_color}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Size: ", Style::default().bold()),
-            Span::raw(format!("{size}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Height: ", Style::default().bold()),
-            Span::raw(format!("{height}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Faith: ", Style::default().bold()),
-            Span::raw(format!("{faith}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Hair: ", Style::default().bold()),
-            Span::raw(format!("{hair_color}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Skin: ", Style::default().bold()),
-            Span::raw(format!("{skin_tone}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Age: ", Style::default().bold()),
-            Span::raw(format!("{age}")),
-        ])),
-        ListItem::new(text::Line::from(vec![
-            Span::styled("Weight: ", Style::default().bold()),
-            Span::raw(format!("{weight}")),
-        ])),
-    ]);
-
-    frame.render_widget(characteristics_list, characteristics_layout[0]);
+    let characteristics: characteristics::Characteristics = characteristics::Builder::new()
+        .alignment(character::Alignment(Conformity::Lawful, Morality::Neutral))
+        .gender(Gender::Male)
+        .size(Size::Medium)
+        .eye_color("Blue")
+        .height(vec![Distance::Feet(5), Distance::Inches(11)])
+        .hair_color("Silver")
+        .skin_tone("Fair")
+        .age(Duration::Years(23))
+        .weight(Weight::Pounds(142))
+        .try_into()
+        .expect("Broke Character");
+    let characteristics_widget: CharacteristicsWidget = characteristics.into();
+    frame.render_widget(characteristics_widget, characteristics_layout[0]);
 
     let personality_layout = Layout::default()
         .constraints([Constraint::Ratio(1, 4); 4].as_ref())

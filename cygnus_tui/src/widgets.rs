@@ -1,5 +1,6 @@
 use cygnus_models::{
     background,
+    characteristics::Characteristics,
     psionics::discipline::{Act, Discipline},
     units::Duration,
 };
@@ -7,8 +8,80 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Buffer, Rect},
     style::{Style, Stylize},
-    widgets::{block::Title, Block, BorderType, Borders, Paragraph, Widget, Wrap},
+    text,
+    widgets::{block::Title, Block, BorderType, Borders, List, ListItem, Paragraph, Widget, Wrap},
 };
+
+pub struct CharacteristicsWidget(Characteristics);
+
+impl From<Characteristics> for CharacteristicsWidget {
+    fn from(value: Characteristics) -> Self {
+        Self(value)
+    }
+}
+
+impl Widget for CharacteristicsWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        List::new([
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Alignment: ", Style::default().bold()),
+                text::Span::raw(self.0.get_alignment().to_string()),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Gender: ", Style::default().bold()),
+                text::Span::raw(
+                    self.0
+                        .get_gender()
+                        .map_or(String::from("--"), |g| g.to_string()),
+                ),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Eyes: ", Style::default().bold()),
+                text::Span::raw(self.0.get_eye_color()),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Size: ", Style::default().bold()),
+                text::Span::raw(self.0.get_size().to_string()),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Height: ", Style::default().bold()),
+                text::Span::raw(
+                    self.0
+                        .get_height()
+                        .iter()
+                        .map(|h| h.to_string())
+                        .collect::<Vec<_>>()
+                        .join(" "),
+                ),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Faith: ", Style::default().bold()),
+                text::Span::raw(
+                    self.0
+                        .get_faith()
+                        .map_or(String::from("--"), |f| f.to_string()),
+                ),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Hair: ", Style::default().bold()),
+                text::Span::raw(self.0.get_hair_color().to_string()),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Skin: ", Style::default().bold()),
+                text::Span::raw(self.0.get_skin_tone().to_string()),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Age: ", Style::default().bold()),
+                text::Span::raw(self.0.get_age().to_string()),
+            ])),
+            ListItem::new(text::Line::from(vec![
+                text::Span::styled("Weight: ", Style::default().bold()),
+                text::Span::raw(self.0.get_weight().to_string()),
+            ])),
+        ])
+        .render(area, buf);
+    }
+}
 
 pub struct BackgroundWidget(background::Background);
 

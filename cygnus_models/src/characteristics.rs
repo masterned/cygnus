@@ -68,7 +68,7 @@ impl Characteristics {
     }
 
     #[must_use]
-    pub fn weight(&self) -> Weight {
+    pub fn get_weight(&self) -> Weight {
         self.weight
     }
 }
