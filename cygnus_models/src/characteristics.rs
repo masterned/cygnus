@@ -3,11 +3,77 @@
 use std::{error::Error, fmt};
 
 use crate::{
-    character::{Alignment, Gender},
     race::Size,
     units::{Distance, Duration, Weight},
 };
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Conformity {
+    Lawful,
+    Neutral,
+    Chaotic,
+}
+
+impl fmt::Display for Conformity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            Conformity::Lawful => "Lawful",
+            Conformity::Neutral => "Neutral",
+            Conformity::Chaotic => "Chaotic",
+        };
+
+        write!(f, "{result}")
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Morality {
+    Good,
+    Neutral,
+    Evil,
+}
+
+impl fmt::Display for Morality {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result = match self {
+            Morality::Good => "Good",
+            Morality::Neutral => "Neutral",
+            Morality::Evil => "Evil",
+        };
+
+        write!(f, "{result}")
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Alignment(pub Conformity, pub Morality);
+
+impl fmt::Display for Alignment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.0, self.1)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Gender {
+    Male,
+    Female,
+}
+
+impl fmt::Display for Gender {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Gender::Male => "Male",
+                Gender::Female => "Female",
+            }
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Characteristics {
     alignment: Alignment,
     gender: Option<Gender>,
@@ -174,11 +240,14 @@ impl fmt::Display for BuildError {
             f,
             "Unable to build Characteristics:\n\t{}",
             match self {
-                BuildError::MissingFields(missing_fields) => missing_fields
-                    .iter()
-                    .map(|f| format!("`{f}`"))
-                    .collect::<Vec<_>>()
-                    .join(", "),
+                BuildError::MissingFields(missing_fields) => format!(
+                    "Missing fields: {}",
+                    missing_fields
+                        .iter()
+                        .map(|f| format!("`{f}`"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                ),
             }
         )
     }

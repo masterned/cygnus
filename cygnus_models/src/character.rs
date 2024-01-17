@@ -2,6 +2,7 @@ use std::{error, fmt};
 
 use crate::{
     ability::{self, Abilities},
+    characteristics::{self, Characteristics, Gender},
     class::{Class, Classes},
     feat::Feat,
     item::{self, Item, Items},
@@ -14,77 +15,10 @@ use crate::{
     slot::{ItemSlots, Slot, SlotsError},
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Conformity {
-    Lawful,
-    Neutral,
-    Chaotic,
-}
-
-impl fmt::Display for Conformity {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let result = match self {
-            Conformity::Lawful => "Lawful",
-            Conformity::Neutral => "Neutral",
-            Conformity::Chaotic => "Chaotic",
-        };
-
-        write!(f, "{result}")
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Morality {
-    Good,
-    Neutral,
-    Evil,
-}
-
-impl fmt::Display for Morality {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let result = match self {
-            Morality::Good => "Good",
-            Morality::Neutral => "Neutral",
-            Morality::Evil => "Evil",
-        };
-
-        write!(f, "{result}")
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Alignment(pub Conformity, pub Morality);
-
-impl fmt::Display for Alignment {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", self.0, self.1)
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Gender {
-    Male,
-    Female,
-}
-
-impl fmt::Display for Gender {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Gender::Male => "Male",
-                Gender::Female => "Female",
-            }
-        )
-    }
-}
-
 #[derive(Clone, Debug, Default)]
 pub struct Builder {
     name: Option<String>,
-    alignment: Option<Alignment>,
-    gender: Option<Gender>,
+    characteristics: Option<Characteristics>,
     personality: Option<Personality>,
     race: Option<Race>,
     base_ability_scores: Option<Abilities>,
@@ -113,18 +47,11 @@ impl Builder {
         Ok(self)
     }
 
-    pub fn alignment(
+    pub fn characteristics(
         mut self,
-        conformity: Conformity,
-        morality: Morality,
+        characteristics: Characteristics,
     ) -> Result<Self, ConstructionError> {
-        let _ = self.alignment.insert(Alignment(conformity, morality));
-
-        Ok(self)
-    }
-
-    pub fn gender(mut self, gender: Gender) -> Result<Self, ConstructionError> {
-        let _ = self.gender.insert(gender);
+        let _ = self.characteristics.insert(characteristics);
 
         Ok(self)
     }
@@ -260,9 +187,11 @@ impl Builder {
             .name
             .ok_or(ConstructionError::MissingField("name".into()))?;
 
-        let alignment = self
-            .alignment
-            .ok_or(ConstructionError::MissingField("alignment".into()))?;
+        let characteristics =
+            self.characteristics
+                .ok_or(ConstructionError::MissingField(String::from(
+                    "characteristics",
+                )))?;
 
         let personality = self.personality.unwrap_or_default();
 
@@ -290,8 +219,7 @@ impl Builder {
 
         Ok(Character {
             name,
-            alignment,
-            gender: self.gender,
+            characteristics,
             personality,
             race,
             base_ability_scores,
@@ -329,8 +257,7 @@ impl error::Error for ConstructionError {}
 #[derive(Debug)]
 pub struct Character {
     name: String,
-    alignment: Alignment,
-    gender: Option<Gender>,
+    characteristics: Characteristics,
     personality: Personality,
     race: Race,
     base_ability_scores: Abilities,
@@ -351,13 +278,18 @@ impl Character {
     }
 
     #[must_use]
-    pub fn get_alignment(&self) -> Alignment {
-        self.alignment
+    pub fn get_characteristics(&self) -> &Characteristics {
+        &self.characteristics
+    }
+
+    #[must_use]
+    pub fn get_alignment(&self) -> characteristics::Alignment {
+        self.characteristics.get_alignment()
     }
 
     #[must_use]
     pub fn get_gender(&self) -> Option<Gender> {
-        self.gender
+        self.characteristics.get_gender()
     }
 
     #[must_use]
@@ -640,17 +572,30 @@ impl error::Error for Error {}
 mod tests {
     use crate::{
         ability::AbilitiesTemplate,
+        characteristics::{Alignment, Conformity, Morality},
         item::{self, ArmorClass},
+        units::{Duration, Weight},
     };
 
     use super::*;
 
     impl Character {
         fn dummy() -> Self {
+            let characteristics: Characteristics = characteristics::Builder::new()
+                .alignment(Alignment(Conformity::Neutral, Morality::Neutral))
+                .size(Size::Medium)
+                .eye_color("--")
+                .height(vec![])
+                .hair_color("--")
+                .skin_tone("--")
+                .age(Duration::Instantaneous)
+                .weight(Weight::Pounds(100))
+                .try_into()
+                .expect("Shouldn't break");
+
             Self {
                 name: "Dummy".into(),
-                alignment: Alignment(Conformity::Neutral, Morality::Neutral),
-                gender: None,
+                characteristics,
                 base_ability_scores: Abilities::from(AbilitiesTemplate {
                     strength: 8,
                     dexterity: 8,

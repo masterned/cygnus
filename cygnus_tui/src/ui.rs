@@ -1,12 +1,10 @@
 use cygnus_models::{
     ability, background,
-    character::{self, Character, Conformity, Gender, Morality},
-    characteristics,
+    character::Character,
     modifiers::Proficiency,
     psionics::discipline::{self, Act, Discipline},
-    race::Size,
     skills,
-    units::{Distance, Duration, Weight},
+    units::Duration,
 };
 use ratatui::{
     prelude::*,
@@ -603,19 +601,8 @@ fn render_description_page(frame: &mut Frame, character: &Character, area: Rect)
 
     frame.render_widget(characteristics_block, layout[1]);
 
-    let characteristics: characteristics::Characteristics = characteristics::Builder::new()
-        .alignment(character::Alignment(Conformity::Lawful, Morality::Neutral))
-        .gender(Gender::Male)
-        .size(Size::Medium)
-        .eye_color("Blue")
-        .height(vec![Distance::Feet(5), Distance::Inches(11)])
-        .hair_color("Silver")
-        .skin_tone("Fair")
-        .age(Duration::Years(23))
-        .weight(Weight::Pounds(142))
-        .try_into()
-        .expect("Broke Character");
-    let characteristics_widget: CharacteristicsWidget = characteristics.into();
+    let characteristics_widget: CharacteristicsWidget =
+        character.get_characteristics().clone().into();
     frame.render_widget(characteristics_widget, characteristics_layout[0]);
 
     let personality_layout = Layout::default()

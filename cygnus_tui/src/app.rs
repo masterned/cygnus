@@ -2,13 +2,15 @@ use std::error;
 
 use cygnus_models::{
     ability::{self, Abilities, AbilitiesTemplate},
-    character::{self, Character, Conformity, Gender, Morality},
+    character::{self, Character},
+    characteristics::{self, Characteristics, Conformity, Gender, Morality},
     class::{self, HPIncreases},
     item::{self, ArmorClass},
     personality::Personality,
-    race::{self, Language},
+    race::{self, Language, Size},
     senses, skills,
     slot::Slot,
+    units::{Distance, Duration, Weight},
 };
 
 /// Application result type.
@@ -70,10 +72,24 @@ impl App {
 
         let senses = senses::Builder::new().darkvision(60).build();
 
+        let characteristics: Characteristics = characteristics::Builder::new()
+            .alignment(characteristics::Alignment(
+                Conformity::Lawful,
+                Morality::Neutral,
+            ))
+            .gender(Gender::Male)
+            .size(Size::Medium)
+            .eye_color("Blue")
+            .height(vec![Distance::Feet(5), Distance::Inches(11)])
+            .hair_color("Silver")
+            .skin_tone("Fair")
+            .age(Duration::Years(23))
+            .weight(Weight::Pounds(142))
+            .try_into()?;
+
         let mut character = character::Builder::new()
             .name("𝛴𝜄𝛾𝜈𝜐𝜍")?
-            .alignment(Conformity::Lawful, Morality::Neutral)?
-            .gender(Gender::Male)?
+            .characteristics(characteristics)?
             .personality(personality)?
             .race(race)?
             .base_ability_scores(Abilities::from(AbilitiesTemplate {
