@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 use cygnus_models::{
     ability, background,
     character::Character,
@@ -8,7 +10,10 @@ use cygnus_models::{
 };
 use ratatui::{
     prelude::*,
-    widgets::{block::*, *},
+    widgets::{
+        block::{Block, BorderType, Position, Title},
+        Borders, Cell, Clear, List, ListItem, ListState, Paragraph, Row, Table, Wrap,
+    },
 };
 
 use crate::{
@@ -54,7 +59,7 @@ fn render_abilities(frame: &mut Frame, character: &Character, rect: Rect) {
         .iter()
         .enumerate()
         .for_each(|(i, &ability)| {
-            render_ability_widget(frame, character, ability, abilities_layout[i])
+            render_ability_widget(frame, character, ability, abilities_layout[i]);
         });
 }
 
@@ -77,8 +82,7 @@ fn render_header(frame: &mut Frame, character: &Character, area: Rect) {
         character.get_name(),
         character
             .get_gender()
-            .map(|g| g.to_string())
-            .unwrap_or("".into()),
+            .map_or(String::new(), |g| g.to_string()),
         character.get_race_name(),
         character.get_class_details(),
         character.get_level()
@@ -211,7 +215,7 @@ fn render_saving_throws_block(frame: &mut Frame, character: &Character, rect: Re
         .chunks(2)
         .enumerate()
         .for_each(|(i, pair)| {
-            render_saving_throw_row(frame, character, pair[0], pair[1], saving_throw_rows[i])
+            render_saving_throw_row(frame, character, pair[0], pair[1], saving_throw_rows[i]);
         });
 }
 
@@ -404,7 +408,7 @@ fn render_senses_block(frame: &mut Frame, character: &Character, area: Rect) {
 
     if let Some(darkvision) = character.get_darkvision() {
         frame.render_widget(
-            Paragraph::new(format!("Darkvision {} ft.", darkvision)).alignment(Alignment::Center),
+            Paragraph::new(format!("Darkvision {darkvision} ft.")).alignment(Alignment::Center),
             senses_layout[3],
         );
     }
@@ -630,7 +634,6 @@ enum PageLink {
 impl From<usize> for PageLink {
     fn from(value: usize) -> Self {
         match value {
-            0 => PageLink::AbilitiesSavesSenses,
             1 => PageLink::Skills,
             2 => PageLink::Actions,
             3 => PageLink::Inventory,
@@ -646,6 +649,11 @@ impl From<usize> for PageLink {
 }
 
 /// Renders the user interface widgets.
+///
+/// # Panics
+///
+/// If the `Character` model has not been created yet.
+///
 pub fn render(app: &mut App, frame: &mut Frame) {
     // This is where you add new widgets.
     // See the following resources:
