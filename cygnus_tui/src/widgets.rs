@@ -1,4 +1,5 @@
 use cygnus_models::{
+    ability::Abilities,
     background,
     characteristics::Characteristics,
     personality::Personality,
@@ -6,12 +7,58 @@ use cygnus_models::{
     units::Duration,
 };
 use ratatui::{
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     prelude::{Buffer, Rect},
     style::{Style, Stylize},
     text,
-    widgets::{block::Title, Block, BorderType, Borders, List, ListItem, Paragraph, Widget, Wrap},
+    widgets::{
+        block::{Position, Title},
+        Block, BorderType, Borders, List, ListItem, Paragraph, Widget, Wrap,
+    },
 };
+
+pub struct AbilitiesWidget(Abilities);
+
+impl From<Abilities> for AbilitiesWidget {
+    fn from(value: Abilities) -> Self {
+        Self(value)
+    }
+}
+
+impl Widget for AbilitiesWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let count = self.0.count_abilities();
+
+        let l = Layout::new(
+            Direction::Horizontal,
+            vec![Constraint::Ratio(1, count as u32); count],
+        )
+        .split(area);
+
+        let mut sorted_abilities = self.0.get_abilities().clone();
+        sorted_abilities.sort_by(|(id1, _), (id2, _)| id1.to_string().cmp(&id2.to_string()));
+        sorted_abilities
+            .iter()
+            .enumerate()
+            .for_each(|(i, (id, abl))| {
+                let modifier = abl.get_modifier();
+                Paragraph::new(format!("{modifier:+}"))
+                    .alignment(Alignment::Center)
+                    .block(
+                        Block::new()
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded)
+                            .title(Title::from(id.to_string()).alignment(Alignment::Center))
+                            .title(
+                                Title::from(abl.get_score().to_string())
+                                    .alignment(Alignment::Center)
+                                    .position(Position::Bottom),
+                            ),
+                    )
+                    .render(l[i], buf);
+            });
+    }
+}
 
 pub struct PersonalityWidget(Personality);
 

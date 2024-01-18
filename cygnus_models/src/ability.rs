@@ -115,6 +115,16 @@ impl Abilities {
     pub fn get_modifier(&self, ability: Identifier) -> Option<isize> {
         self.0.get(&ability).map(|ability| ability.get_modifier())
     }
+
+    #[must_use]
+    pub fn count_abilities(&self) -> usize {
+        self.0.len()
+    }
+
+    #[must_use]
+    pub fn get_abilities(&self) -> Vec<(&Identifier, &Ability)> {
+        self.0.keys().zip(self.0.values()).collect()
+    }
 }
 
 impl From<AbilitiesTemplate> for Abilities {

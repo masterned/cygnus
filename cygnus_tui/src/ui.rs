@@ -18,50 +18,11 @@ use ratatui::{
 
 use crate::{
     app::App,
-    widgets::{BackgroundWidget, CharacteristicsWidget, DisciplineWidget, PersonalityWidget},
+    widgets::{
+        AbilitiesWidget, BackgroundWidget, CharacteristicsWidget, DisciplineWidget,
+        PersonalityWidget,
+    },
 };
-
-fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragraph {
-    let modifier = character.get_ability_modifier(ability);
-    Paragraph::new(format!("{modifier:+}"))
-        .alignment(Alignment::Center)
-        .block(
-            Block::new()
-                .borders(Borders::ALL)
-                .border_type(BorderType::Rounded)
-                .title(Title::from(ability.to_string()).alignment(Alignment::Center))
-                .title(
-                    Title::from(character.get_ability_score(ability).to_string())
-                        .alignment(Alignment::Center)
-                        .position(Position::Bottom),
-                ),
-        )
-}
-
-fn render_ability_widget(
-    frame: &mut Frame,
-    character: &Character,
-    ability: ability::Identifier,
-    rect: Rect,
-) {
-    let ability = ability_widget(character, ability);
-
-    frame.render_widget(ability, rect);
-}
-
-fn render_abilities(frame: &mut Frame, character: &Character, rect: Rect) {
-    let abilities_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Ratio(1, 6); 6])
-        .split(rect);
-
-    ability::Identifier::all()
-        .iter()
-        .enumerate()
-        .for_each(|(i, &ability)| {
-            render_ability_widget(frame, character, ability, abilities_layout[i]);
-        });
-}
 
 fn render_header(frame: &mut Frame, character: &Character, area: Rect) {
     let header_layout =
@@ -692,7 +653,9 @@ pub fn render(app: &mut App, frame: &mut Frame) {
             )
             .split(document_layout[1]);
 
-            render_abilities(frame, character, body_layout[0]);
+            let abilities_widget: AbilitiesWidget = character.get_abilities().into();
+            frame.render_widget(abilities_widget, body_layout[0]);
+
             render_saving_throws_block(frame, character, body_layout[1]);
             render_senses_block(frame, character, body_layout[2]);
         }
