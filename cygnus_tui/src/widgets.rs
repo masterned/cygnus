@@ -1,6 +1,7 @@
 use cygnus_models::{
     background,
     characteristics::Characteristics,
+    personality::Personality,
     psionics::discipline::{Act, Discipline},
     units::Duration,
 };
@@ -11,6 +12,38 @@ use ratatui::{
     text,
     widgets::{block::Title, Block, BorderType, Borders, List, ListItem, Paragraph, Widget, Wrap},
 };
+
+pub struct PersonalityWidget(Personality);
+
+impl From<Personality> for PersonalityWidget {
+    fn from(value: Personality) -> Self {
+        Self(value)
+    }
+}
+
+impl Widget for PersonalityWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let l = Layout::default()
+            .constraints([Constraint::Ratio(1, 4); 4].as_ref())
+            .split(area);
+
+        Paragraph::new(self.0.traits.join("\n"))
+            .wrap(Wrap::default())
+            .render(l[0], buf);
+
+        Paragraph::new(self.0.ideals.join("\n"))
+            .wrap(Wrap::default())
+            .render(l[1], buf);
+
+        Paragraph::new(self.0.bonds.join("\n"))
+            .wrap(Wrap::default())
+            .render(l[2], buf);
+
+        Paragraph::new(self.0.flaws.join("\n"))
+            .wrap(Wrap::default())
+            .render(l[3], buf);
+    }
+}
 
 pub struct CharacteristicsWidget(Characteristics);
 

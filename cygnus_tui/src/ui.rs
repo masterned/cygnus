@@ -13,7 +13,7 @@ use ratatui::{
 
 use crate::{
     app::App,
-    widgets::{BackgroundWidget, CharacteristicsWidget, DisciplineWidget},
+    widgets::{BackgroundWidget, CharacteristicsWidget, DisciplineWidget, PersonalityWidget},
 };
 
 fn ability_widget(character: &Character, ability: ability::Identifier) -> Paragraph {
@@ -605,23 +605,8 @@ fn render_description_page(frame: &mut Frame, character: &Character, area: Rect)
         character.get_characteristics().clone().into();
     frame.render_widget(characteristics_widget, characteristics_layout[0]);
 
-    let personality_layout = Layout::default()
-        .constraints([Constraint::Ratio(1, 4); 4].as_ref())
-        .split(characteristics_layout[1]);
-
-    let personailty_traits =
-        Paragraph::new(character.get_personality().traits.join("\n")).wrap(Wrap::default());
-    frame.render_widget(personailty_traits, personality_layout[0]);
-
-    let ideals =
-        Paragraph::new(character.get_personality().ideals.join("\n")).wrap(Wrap::default());
-    frame.render_widget(ideals, personality_layout[1]);
-
-    let bonds = Paragraph::new(character.get_personality().bonds.join("\n")).wrap(Wrap::default());
-    frame.render_widget(bonds, personality_layout[2]);
-
-    let flaws = Paragraph::new(character.get_personality().flaws.join("\n")).wrap(Wrap::default());
-    frame.render_widget(flaws, personality_layout[3]);
+    let personality_widget: PersonalityWidget = character.get_personality().clone().into();
+    frame.render_widget(personality_widget, characteristics_layout[1]);
 
     let appearance_block = Block::new()
         .borders(Borders::TOP)
